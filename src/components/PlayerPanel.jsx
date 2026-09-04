@@ -4,47 +4,42 @@ import { GEM_COLORS, ALL_GEMS, GEM_METADATA, normalizeColor } from '../utils/gem
 
 export default function PlayerPanel({ player, index }) {
   const gameState = useGameStore((state) => state.gameState);
-  const myName = useGameStore((state) => state.myName);
-  const mySocketId = useGameStore((state) => state.mySocketId);
-  const sendPlayerAction = useGameStore((state) => state.sendPlayerAction);
+  const checkIsMe = useGameStore((state) => state.isMe);
+  const myTurn = useGameStore((state) => state.isMyTurn());
+  const buyCard = useGameStore((state) => state.buyCard);
 
   // State modal untuk melihat/membeli kartu reservasi pemilik sendiri
   const [selectedReservedCard, setSelectedReservedCard] = useState(null);
 
   if (!player) return null;
 
-  const players = gameState?.players || [];
   const currentIndex = gameState?.currentPlayerIndex ?? 0;
-  const isCurrentTurn = players[currentIndex]?.name === player.name || (typeof index === 'number' && currentIndex === index);
+  const isCurrentTurn = typeof index === 'number' && currentIndex === index;
 
-  const isMe = Boolean(player.name === myName || (mySocketId && (player.id === mySocketId || player.socketId === mySocketId)));
+  const isMe = checkIsMe(player);
 
   const isConnected = player.connected !== false;
 
   // Hitung total poin
   const totalPoints = player.points ?? player.score ?? player.prestige ?? 0;
 
-  // Normalisasi token
-  const tokens = player.tokens || {};
+  // Token dari server berkunci nama resmi (emerald/...), normalkan ke warna UI.
+  const tokens = {};
+  Object.entries(player.tokens || {}).forEach(([serverColor, count]) => {
+    tokens[normalizeColor(serverColor)] = count;
+  });
   const totalTokens = ALL_GEMS.reduce((sum, c) => sum + (tokens[c] || 0), 0);
 
-  // Normalisasi bonus kartu per warna
+  // Bonus kartu per warna, dihitung dari cardsOwned (nama field resmi backend).
   const bonuses = { white: 0, blue: 0, green: 0, red: 0, black: 0 };
-  if (Array.isArray(player.cards)) {
-    player.cards.forEach((c) => {
-      const bColor = normalizeColor(c.gem || c.bonus || c.color);
-      if (bonuses[bColor] !== undefined) bonuses[bColor]++;
-    });
-  } else if (player.bonuses) {
-    Object.entries(player.bonuses).forEach(([k, v]) => {
-      const normK = normalizeColor(k);
-      if (bonuses[normK] !== undefined) bonuses[normK] = v;
-    });
-  }
+  (player.cardsOwned || []).forEach((c) => {
+    const bColor = normalizeColor(c.bonus);
+    if (bonuses[bColor] !== undefined) bonuses[bColor]++;
+  });
 
   // Kartu reservasi
-  const reservedCards = player.reservedCards || player.reserved || [];
-  const reservedCount = Array.isArray(reservedCards) ? reservedCards.length : typeof player.reservedCount === 'number' ? player.reservedCount : 0;
+  const reservedCards = player.reservedCards || [];
+  const reservedCount = reservedCards.length;
 
   // Cek apakah user (jika isMe) mampu membeli kartu reservasi
   const canAffordReservedCard = (card) => {
@@ -66,13 +61,9 @@ export default function PlayerPanel({ player, index }) {
   };
 
   const handleBuyReserved = (card) => {
-    if (!isCurrentTurn) return;
-    sendPlayerAction({
-      type: 'buy_card',
-      cardId: card.id,
-      card: card,
-      fromReserved: true,
-    });
+    // Hanya pemilik kartu yang boleh membeli dari reservasinya sendiri.
+    if (!isMe || !myTurn) return;
+    buyCard(card.id, true);
     setSelectedReservedCard(null);
   };
 
@@ -360,7 +351,7 @@ export default function PlayerPanel({ player, index }) {
               <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setSelectedReservedCard(null)}>
                 Batal
               </button>
-              <button type="button" className="btn btn-emerald" style={{ flex: 1 }} disabled={!isCurrentTurn || !canAffordReservedCard(selectedReservedCard)} onClick={() => handleBuyReserved(selectedReservedCard)}>
+              <button type="button" className="btn btn-emerald" style={{ flex: 1 }} disabled={!isMe || !myTurn || !canAffordReservedCard(selectedReservedCard)} onClick={() => handleBuyReserved(selectedReservedCard)}>
                 🛒 Beli
               </button>
             </div>

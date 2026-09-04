@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { socket, emit } from '../socket/socketClient';
+import { translateError } from '../utils/errorMessages';
+import { toServerColor, toServerTokenMap } from '../utils/gemUtils';
 
 let listenersInitialized = false;
 
@@ -7,6 +9,8 @@ export const useGameStore = create((set, get) => ({
   // State dasar sesuai spesifikasi brief
   roomId: sessionStorage.getItem('roomId') || null,
   myName: sessionStorage.getItem('myName') || '',
+  // playerId dari server: identitas stabil lintas reconnect, bukan socket.id.
+  myPlayerId: sessionStorage.getItem('myPlayerId') || null,
   mySocketId: null,
   isConnected: socket.connected,
   players: [],
@@ -16,19 +20,50 @@ export const useGameStore = create((set, get) => ({
   // Setters manual bila diperlukan
   setRoomId: (roomId) => set({ roomId }),
   setMyName: (myName) => set({ myName }),
+  setMyPlayerId: (myPlayerId) => set({ myPlayerId }),
   setPlayers: (players) => set({ players: Array.isArray(players) ? players : [] }),
   setGameState: (gameState) => set({ gameState }),
   setLastError: (lastError) => set({ lastError }),
   clearError: () => set({ lastError: null }),
 
   // Reset store ke kondisi awal
-  resetStore: () =>
+  resetStore: () => {
+    sessionStorage.removeItem('myPlayerId');
     set({
       roomId: null,
+      myPlayerId: null,
       players: [],
       gameState: null,
       lastError: null,
-    }),
+    });
+  },
+
+  /**
+   * Satu-satunya sumber kebenaran "ini saya".
+   * Player.id dari backend selalu playerId, bukan socket.id, jadi cocokkan ke situ.
+   * Nama dipakai sebagai cadangan saat playerId belum sempat tersimpan.
+   */
+  isMe: (player) => {
+    if (!player) return false;
+    const { myPlayerId, myName } = get();
+    if (myPlayerId && player.id) return player.id === myPlayerId;
+    return Boolean(myName) && player.name === myName;
+  },
+
+  // Pemain lokal di dalam gameState, atau null bila belum ada.
+  getMe: () => {
+    const { gameState, isMe } = get();
+    return (gameState?.players || []).find((p) => isMe(p)) || null;
+  },
+
+  // True bila sekarang giliran pemain lokal.
+  isMyTurn: () => {
+    const { gameState, isMe } = get();
+    if (!gameState || gameState.status !== 'playing') return false;
+    if (gameState.pendingDiscard) return false;
+    const active = gameState.players?.[gameState.currentPlayerIndex];
+    return isMe(active);
+  },
 
   // Action helpers yang memanggil socket emit
   createRoom: (name) => {
@@ -64,6 +99,41 @@ export const useGameStore = create((set, get) => ({
     emit('player_action', { roomId, action });
   },
 
+  // --- Action helper per jenis aksi -----------------------------------------
+  // Semua warna diterjemahkan ke nama resmi backend di sini, supaya komponen UI
+  // tetap boleh memakai white/blue/green/red/black.
+
+  /** Ambil 1 token dari 3 warna berbeda. Backend menolak selain tepat 3 warna. */
+  takeThreeDifferent: (uiColors) => {
+    const colors = (uiColors || []).map(toServerColor);
+    get().sendPlayerAction({ type: 'take_three_different', colors });
+  },
+
+  /** Ambil 2 token warna sama. Backend butuh stok bank >= 4. */
+  takeTwoSame: (uiColor) => {
+    get().sendPlayerAction({ type: 'take_two_same', color: toServerColor(uiColor) });
+  },
+
+  buyCard: (cardId, fromReserved = false) => {
+    get().sendPlayerAction({ type: 'buy_card', cardId, fromReserved });
+  },
+
+  reserveCardFromTable: (cardId) => {
+    get().sendPlayerAction({ type: 'reserve_card', cardId });
+  },
+
+  reserveCardFromDeck: (tier) => {
+    get().sendPlayerAction({ type: 'reserve_card', fromDeck: true, tier });
+  },
+
+  /** Buang token; backend menuntut jumlah persis sesuai pendingDiscard.excess. */
+  discardTokens: (tokensByUiColor) => {
+    get().sendPlayerAction({
+      type: 'discard_tokens',
+      tokensToDiscard: toServerTokenMap(tokensByUiColor),
+    });
+  },
+
   // Inisialisasi semua socket listener di satu tempat
   initSocketListeners: () => {
     if (listenersInitialized) {
@@ -90,20 +160,33 @@ export const useGameStore = create((set, get) => ({
       console.error('[Socket] Connection error:', error?.message);
     });
 
-    // 2. room_created { roomId }
+    // 2. room_created { roomId, playerId, players }
     socket.on('room_created', (payload) => {
       console.log('[Socket] room_created:', payload);
       const roomId = typeof payload === 'string' ? payload : payload?.roomId;
-      set({ roomId, lastError: null });
+      const playerId = payload?.playerId || null;
+      const players = Array.isArray(payload?.players) ? payload.players : [];
+      if (roomId) sessionStorage.setItem('roomId', roomId);
+      if (playerId) sessionStorage.setItem('myPlayerId', playerId);
+      set((state) => ({
+        roomId: roomId || state.roomId,
+        myPlayerId: playerId || state.myPlayerId,
+        players: players.length > 0 ? players : state.players,
+        lastError: null,
+      }));
     });
 
-    // 3. room_joined { roomId, players }
+    // 3. room_joined { roomId, playerId, players }
     socket.on('room_joined', (payload) => {
       console.log('[Socket] room_joined:', payload);
       const roomId = payload?.roomId;
+      const playerId = payload?.playerId || null;
       const players = Array.isArray(payload?.players) ? payload.players : [];
+      if (roomId) sessionStorage.setItem('roomId', roomId);
+      if (playerId) sessionStorage.setItem('myPlayerId', playerId);
       set((state) => ({
         roomId: roomId || state.roomId,
+        myPlayerId: playerId || state.myPlayerId,
         players: players.length > 0 ? players : state.players,
         lastError: null,
       }));
@@ -130,11 +213,11 @@ export const useGameStore = create((set, get) => ({
       set({ gameState });
     });
 
-    // 7. action_error { message }
+    // 7. action_error { error } — backend mengirim kode, bukan kalimat.
     socket.on('action_error', (payload) => {
       console.warn('[Socket] action_error:', payload);
-      const message = typeof payload === 'string' ? payload : payload?.message || payload?.error || 'Unknown error occurred';
-      set({ lastError: message });
+      const code = typeof payload === 'string' ? payload : payload?.error || payload?.message;
+      set({ lastError: translateError(code) });
     });
   },
 }));

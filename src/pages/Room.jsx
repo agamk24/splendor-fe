@@ -8,7 +8,7 @@ import NobleRow from '../components/NobleRow';
 import PlayerPanel from '../components/PlayerPanel';
 import EndGameScreen from '../components/EndGameScreen';
 import ToastAlert from '../components/ToastAlert';
-import { ALL_GEMS, GEM_METADATA } from '../utils/gemUtils';
+import { ALL_GEMS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 
 export default function Room() {
   const { roomId: urlRoomId } = useParams();
@@ -20,11 +20,11 @@ export default function Room() {
   const setRoomId = useGameStore((state) => state.setRoomId);
   const isConnected = useGameStore((state) => state.isConnected);
   const gameState = useGameStore((state) => state.gameState);
-  const mySocketId = useGameStore((state) => state.mySocketId);
   const rejoinRoom = useGameStore((state) => state.rejoinRoom);
   const joinRoom = useGameStore((state) => state.joinRoom);
   const resetStore = useGameStore((state) => state.resetStore);
-  const sendPlayerAction = useGameStore((state) => state.sendPlayerAction);
+  const me = useGameStore((state) => state.getMe());
+  const discardTokens = useGameStore((state) => state.discardTokens);
 
   // Local state
   const [inputName, setInputName] = useState('');
@@ -84,22 +84,25 @@ export default function Room() {
     navigate('/');
   };
 
-  // Cek apakah pemain lokal kelebihan token (> 10)
   const players = gameState?.players || [];
-  const currentIndex = gameState?.currentPlayerIndex ?? 0;
-  const me = players.find((p) => p.name === myName || (mySocketId && (p.id === mySocketId || p.socketId === mySocketId)));
-  const myTokens = me?.tokens || {};
+
+  // Token pemain lokal, dinormalkan dari nama resmi backend ke warna UI.
+  const myTokens = {};
+  Object.entries(me?.tokens || {}).forEach(([serverColor, count]) => {
+    myTokens[normalizeColor(serverColor)] = count;
+  });
   const myTotalTokens = ALL_GEMS.reduce((sum, c) => sum + (myTokens[c] || 0), 0);
-  const needsDiscard = myTotalTokens > 10;
-  const tokensToDiscard = Math.max(0, myTotalTokens - 10);
+
+  // Fase buang token ditentukan server lewat pendingDiscard, bukan ditebak klien.
+  const pendingDiscard = gameState?.pendingDiscard || null;
+  const needsDiscard = Boolean(pendingDiscard && me && pendingDiscard.playerId === me.id);
+  const tokensToDiscard = needsDiscard ? pendingDiscard.excess : 0;
   const selectedDiscardCount = Object.values(discardSelection).reduce((a, b) => a + b, 0);
 
   const handleConfirmDiscard = () => {
+    // Backend menuntut jumlah persis; kurang atau lebih ditolak DISCARD_WRONG_AMOUNT.
     if (selectedDiscardCount !== tokensToDiscard) return;
-    sendPlayerAction({
-      type: 'discard_tokens',
-      tokens: discardSelection,
-    });
+    discardTokens(discardSelection);
     setDiscardSelection({ white: 0, blue: 0, green: 0, red: 0, black: 0, gold: 0 });
   };
 
@@ -284,7 +287,7 @@ export default function Room() {
               }}
             >
               {players.map((p, idx) => (
-                <PlayerPanel key={p.id || p.socketId || idx} player={p} index={idx} />
+                <PlayerPanel key={p.id || idx} player={p} index={idx} />
               ))}
             </div>
           </div>

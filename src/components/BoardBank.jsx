@@ -4,9 +4,9 @@ import { GEM_COLORS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 
 export default function BoardBank() {
   const gameState = useGameStore((state) => state.gameState);
-  const myName = useGameStore((state) => state.myName);
-  const mySocketId = useGameStore((state) => state.mySocketId);
-  const sendPlayerAction = useGameStore((state) => state.sendPlayerAction);
+  const takeThreeDifferent = useGameStore((state) => state.takeThreeDifferent);
+  const takeTwoSame = useGameStore((state) => state.takeTwoSame);
+  const isMyTurn = useGameStore((state) => state.isMyTurn());
 
   // Local state untuk token yang sedang dipilih sementara
   const [selected, setSelected] = useState({
@@ -17,12 +17,12 @@ export default function BoardBank() {
     black: 0,
   });
 
-  const bank = gameState?.bank || {};
-  const players = gameState?.players || [];
-  const currentIndex = gameState?.currentPlayerIndex ?? 0;
-  const currentPlayer = players[currentIndex];
-
-  const isMyTurn = Boolean(currentPlayer && (currentPlayer.name === myName || (mySocketId && (currentPlayer.id === mySocketId || currentPlayer.socketId === mySocketId))));
+  // Bank dari server berkunci nama resmi (emerald/sapphire/...), UI berkunci warna.
+  const rawBank = gameState?.bank || {};
+  const bank = {};
+  Object.entries(rawBank).forEach(([serverColor, count]) => {
+    bank[normalizeColor(serverColor)] = count;
+  });
 
   // Hitung ringkasan seleksi
   const selectedEntries = Object.entries(selected).filter(([_, count]) => count > 0);
@@ -30,9 +30,10 @@ export default function BoardBank() {
   const selectedColorsCount = selectedEntries.length;
   const hasDouble = selectedEntries.some(([_, count]) => count === 2);
 
-  // Validasi aturan pengambilan token Splendor:
-  // 1. Ambil 2 token warna sama (hanya jika di bank ada minimal 4, dan tidak ada warna lain dipilih)
-  // 2. Ambil hingga 3 token warna berbeda (masing-masing 1 token)
+  // Validasi aturan pengambilan token Splendor, mengikuti engine backend:
+  // 1. Ambil 2 token warna sama — hanya jika stok bank >= 4 (TAKE_TWO_MIN_IN_BANK).
+  // 2. Ambil 1 token dari TEPAT 3 warna berbeda (TAKE_THREE_COUNT).
+  //    Backend menolak 1 atau 2 warna dengan NEED_THREE_DISTINCT_COLORS.
   const isValidSelection = (() => {
     if (totalSelected === 0) return false;
     if (hasDouble) {
@@ -42,8 +43,7 @@ export default function BoardBank() {
       }
       return false;
     }
-    // Warna berbeda: 1 sampai 3 token
-    return selectedColorsCount <= 3 && totalSelected === selectedColorsCount;
+    return selectedColorsCount === 3 && totalSelected === 3;
   })();
 
   // Klik token di bank untuk memilih
@@ -89,15 +89,12 @@ export default function BoardBank() {
   const handleConfirm = () => {
     if (!isValidSelection || !isMyTurn) return;
 
-    // Buat daftar token dalam format array string maupun objek untuk kompatibilitas
-    const tokenList = Object.entries(selected).flatMap(([color, count]) => Array(count).fill(color));
-
-    sendPlayerAction({
-      type: 'take_tokens',
-      tokens: selected,
-      tokenList: tokenList,
-      color: hasDouble ? selectedEntries[0][0] : undefined,
-    });
+    // Backend punya dua aksi terpisah, bukan satu `take_tokens`.
+    if (hasDouble) {
+      takeTwoSame(selectedEntries[0][0]);
+    } else {
+      takeThreeDifferent(selectedEntries.map(([color]) => color));
+    }
 
     handleResetSelection();
   };
@@ -182,7 +179,7 @@ export default function BoardBank() {
         </div>
 
         {totalSelected === 0 ? (
-          <p style={{ color: '#64748b', fontSize: '0.8rem', textAlign: 'center', margin: '0.25rem 0' }}>Klik token bank di atas untuk memilih (maks 3 beda / 2 sama).</p>
+          <p style={{ color: '#64748b', fontSize: '0.8rem', textAlign: 'center', margin: '0.25rem 0' }}>Klik token bank di atas untuk memilih (tepat 3 warna beda / 2 warna sama).</p>
         ) : (
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
             {selectedEntries.map(([color, count]) => {

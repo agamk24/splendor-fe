@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 
 export default function Lobby({ roomId }) {
   const myName = useGameStore((state) => state.myName);
-  const mySocketId = useGameStore((state) => state.mySocketId);
+  const myPlayerId = useGameStore((state) => state.myPlayerId);
   const players = useGameStore((state) => state.players);
   const startGame = useGameStore((state) => state.startGame);
   const lastError = useGameStore((state) => state.lastError);
@@ -23,8 +23,9 @@ export default function Lobby({ roomId }) {
         connected: true,
       };
     }
+    // player_list_update mengirim PlayerListEntry: { playerId, name, connected, isHost }
     return {
-      id: p.id || p.socketId || `p-${idx}`,
+      id: p.playerId || p.id || `p-${idx}`,
       name: p.name || 'Pemain',
       isHost: p.isHost ?? idx === 0,
       connected: p.connected ?? true,
@@ -33,7 +34,9 @@ export default function Lobby({ roomId }) {
 
   // Tentukan apakah user saat ini adalah host
   const hostPlayer = normalizedPlayers.find((p) => p.isHost) || normalizedPlayers[0];
-  const isHost = normalizedPlayers.length > 0 && (hostPlayer?.name === myName || (mySocketId && hostPlayer?.id === mySocketId));
+  const isHost =
+    normalizedPlayers.length > 0 &&
+    (myPlayerId ? hostPlayer?.id === myPlayerId : hostPlayer?.name === myName);
 
   const canStart = isHost && normalizedPlayers.length >= 2 && normalizedPlayers.length <= 4;
 
