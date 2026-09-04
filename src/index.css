@@ -278,22 +278,128 @@ body {
 
 /* Noble Tile */
 .noble-tile {
-  width: 90px;
-  height: 90px;
+  width: 105px;
+  min-height: 116px;
+  height: auto;
   background: linear-gradient(135deg, #1e293b, #0f172a);
   border: 2px solid #f59e0b;
   border-radius: 8px;
-  padding: 0.4rem;
+  padding: 0.5rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
-/* Active Player Highlight */
+.noble-tile:hover {
+  transform: translateY(-2px);
+  border-color: #fbbf24;
+  box-shadow: 0 6px 14px rgba(245, 158, 11, 0.25);
+}
+
+/* Active Player Highlight with pulsing glow */
 .player-active {
   border-color: #f59e0b !important;
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3) !important;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4) !important;
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
+  }
+}
+
+/* Card Hover & Shine */
+.splendor-card {
+  transform: perspective(600px) rotateX(0deg);
+  transition:
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.25s ease,
+    border-color 0.2s ease;
+}
+
+.splendor-card:hover {
+  transform: perspective(600px) translateY(-6px) scale(1.03);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.6),
+    0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+.splendor-card.affordable:hover {
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.6),
+    0 0 18px rgba(52, 211, 153, 0.6);
+}
+
+/* Modal Pop Animation */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Game Room Layout - Player Cards on the Left */
+.room-container {
+  max-width: 1520px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.game-players-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.game-table-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
 }
 
 /* Responsive Board Grid */
@@ -323,7 +429,27 @@ body {
   background: rgba(148, 163, 184, 0.5);
 }
 
-/* Mobile Responsiveness */
+/* Mobile & Tablet Responsiveness */
+@media (max-width: 1120px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .game-players-column {
+    order: 2;
+  }
+
+  .players-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .game-table-column {
+    order: 1;
+  }
+}
+
 @media (max-width: 900px) {
   .game-board-grid {
     grid-template-columns: 1fr;
@@ -353,8 +479,10 @@ body {
   }
 
   .noble-tile {
-    width: 80px;
-    height: 80px;
+    width: 98px;
+    min-height: 110px;
+    height: auto;
+    padding: 0.4rem;
   }
 
   .toast-container {
