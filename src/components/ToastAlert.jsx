@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { sound } from '../utils/soundManager';
 
 export default function ToastAlert() {
   const lastError = useGameStore((state) => state.lastError);
@@ -7,6 +8,8 @@ export default function ToastAlert() {
 
   useEffect(() => {
     if (!lastError) return;
+
+    sound.playError();
 
     // Auto-hide setelah 4 detik sesuai spesifikasi
     const timer = setTimeout(() => {

@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { GEM_COLORS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
+import { sound } from '../utils/soundManager';
 
 export default function EndGameScreen() {
   const navigate = useNavigate();
   const gameState = useGameStore((state) => state.gameState);
   const checkIsMe = useGameStore((state) => state.isMe);
   const resetStore = useGameStore((state) => state.resetStore);
+
+  useEffect(() => {
+    sound.playVictory();
+  }, []);
 
   const players = gameState?.players || [];
 
@@ -135,9 +140,7 @@ export default function EndGameScreen() {
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                      {cardsCount} kartu dibeli
-                    </span>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{cardsCount} kartu dibeli</span>
                   </div>
                 </div>
 
