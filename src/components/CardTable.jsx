@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { GEM_COLORS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 import { sound } from '../utils/soundManager';
@@ -267,141 +268,121 @@ export default function CardTable() {
         })}
       </div>
 
-      {/* Modal Aksi Kartu Terbuka */}
-      {selectedCard && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.75)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-          onClick={() => setSelectedCard(null)}
-        >
-          <div className="card" style={{ maxWidth: '380px', width: '100%', padding: '1.5rem', border: '1px solid #38bdf8' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc' }}>Opsi Kartu (Tier {selectedCard.tier})</h4>
-              <button onClick={() => setSelectedCard(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.25rem', cursor: 'pointer' }}>
-                &times;
-              </button>
-            </div>
-
-            {/* Info Kartu */}
-            <div
-              style={{
-                background: 'rgba(15, 23, 42, 0.7)',
-                borderRadius: '8px',
-                padding: '1rem',
-                marginBottom: '1.25rem',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span style={{ color: '#94a3b8' }}>Bonus Permata:</span>
-                <span style={{ fontWeight: 700 }}>
-                  {GEM_METADATA[normalizeColor(selectedCard.gem || selectedCard.bonus || selectedCard.color)]?.symbol} {GEM_METADATA[normalizeColor(selectedCard.gem || selectedCard.bonus || selectedCard.color)]?.indonesian}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span style={{ color: '#94a3b8' }}>Poin Prestise:</span>
-                <span style={{ fontWeight: 700, color: '#fbbf24' }}>{selectedCard.points ?? selectedCard.prestige ?? 0} Poin</span>
+      {/* Modal Aksi Kartu Terbuka - Dipindahkan ke Layar Utama (document.body) */}
+      {selectedCard &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="modal-overlay" onClick={() => setSelectedCard(null)}>
+            <div className="card modal-content" style={{ maxWidth: '400px', width: '100%', padding: '1.5rem', border: '1px solid #38bdf8' }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc' }}>Opsi Kartu (Tier {selectedCard.tier})</h4>
+                <button onClick={() => setSelectedCard(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.25rem', cursor: 'pointer' }}>
+                  &times;
+                </button>
               </div>
 
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ color: '#94a3b8', fontSize: '0.85rem', display: 'block', marginBottom: '0.4rem' }}>Biaya Pembelian:</span>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {selectedCard.cost &&
-                    Object.entries(selectedCard.cost).map(([cKey, costAmount]) => {
-                      if (costAmount <= 0) return null;
-                      const c = normalizeColor(cKey);
-                      const meta = GEM_METADATA[c];
-                      return (
-                        <span
-                          key={cKey}
-                          style={{
-                            padding: '0.2rem 0.5rem',
-                            background: meta?.bgColor,
-                            border: `1px solid ${meta?.borderColor}`,
-                            borderRadius: '6px',
-                            color: meta?.textColor,
-                            fontSize: '0.85rem',
-                            fontWeight: 700,
-                          }}
-                        >
-                          {meta?.symbol} {costAmount}
-                        </span>
-                      );
-                    })}
-                </div>
-              </div>
-            </div>
-
-            {/* Status Mampu Beli */}
-            <div style={{ marginBottom: '1.25rem', textAlign: 'center', fontSize: '0.875rem' }}>
-              {canAffordCard(selectedCard) ? <span style={{ color: '#34d399', fontWeight: 600 }}>✓ Anda mampu membeli kartu ini!</span> : <span style={{ color: '#f87171' }}>✕ Sumber daya tidak mencukupi untuk membeli.</span>}
-            </div>
-
-            {/* Tombol Aksi */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button type="button" className="btn btn-primary" disabled={!isMyTurn || !canAffordCard(selectedCard)} onClick={() => handleBuyCard(selectedCard)}>
-                🛒 Beli Kartu
-              </button>
-              <button type="button" className="btn btn-secondary" disabled={!isMyTurn || !canReserve} onClick={() => handleReserveCard(selectedCard)}>
-                🔖 Reservasi Kartu {reservedCount >= 3 ? '(Maks 3)' : ''}
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedCard(null)}
+              {/* Info Kartu */}
+              <div
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#94a3b8',
-                  padding: '0.4rem',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  marginBottom: '1.25rem',
                 }}
               >
-                Batal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#94a3b8' }}>Bonus Permata:</span>
+                  <span style={{ fontWeight: 700 }}>
+                    {GEM_METADATA[normalizeColor(selectedCard.gem || selectedCard.bonus || selectedCard.color)]?.symbol} {GEM_METADATA[normalizeColor(selectedCard.gem || selectedCard.bonus || selectedCard.color)]?.indonesian}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#94a3b8' }}>Poin Prestise:</span>
+                  <span style={{ fontWeight: 700, color: '#fbbf24' }}>{selectedCard.points ?? selectedCard.prestige ?? 0} Poin</span>
+                </div>
 
-      {/* Modal Reservasi Kartu dari Deck */}
-      {selectedDeckTier && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.75)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-          onClick={() => setSelectedDeckTier(null)}
-        >
-          <div className="card" style={{ maxWidth: '360px', width: '100%', padding: '1.5rem', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-            <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.75rem' }}>Reservasi Deck Tier {selectedDeckTier}</h4>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.25rem' }}>Ambil 1 kartu tertutup dari atas tumpukan Tier {selectedDeckTier} dan 1 token emas (jika tersedia di bank).</p>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button type="button" onClick={() => setSelectedDeckTier(null)} className="btn btn-secondary" style={{ flex: 1 }}>
-                Batal
-              </button>
-              <button type="button" onClick={() => handleReserveDeck(selectedDeckTier)} className="btn btn-emerald" style={{ flex: 1 }} disabled={!isMyTurn || !canReserve}>
-                Reservasi
-              </button>
+                <div style={{ marginTop: '0.75rem' }}>
+                  <span style={{ color: '#94a3b8', fontSize: '0.85rem', display: 'block', marginBottom: '0.4rem' }}>Biaya Pembelian:</span>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {selectedCard.cost &&
+                      Object.entries(selectedCard.cost).map(([cKey, costAmount]) => {
+                        if (costAmount <= 0) return null;
+                        const c = normalizeColor(cKey);
+                        const meta = GEM_METADATA[c];
+                        return (
+                          <span
+                            key={cKey}
+                            style={{
+                              padding: '0.2rem 0.5rem',
+                              background: meta?.bgColor,
+                              border: `1px solid ${meta?.borderColor}`,
+                              borderRadius: '6px',
+                              color: meta?.textColor,
+                              fontSize: '0.85rem',
+                              fontWeight: 700,
+                            }}
+                          >
+                            {meta?.symbol} {costAmount}
+                          </span>
+                        );
+                      })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Mampu Beli */}
+              <div style={{ marginBottom: '1.25rem', textAlign: 'center', fontSize: '0.875rem' }}>
+                {canAffordCard(selectedCard) ? <span style={{ color: '#34d399', fontWeight: 600 }}>✓ Anda mampu membeli kartu ini!</span> : <span style={{ color: '#f87171' }}>✕ Sumber daya tidak mencukupi untuk membeli.</span>}
+              </div>
+
+              {/* Tombol Aksi */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <button type="button" className="btn btn-primary" disabled={!isMyTurn || !canAffordCard(selectedCard)} onClick={() => handleBuyCard(selectedCard)}>
+                  🛒 Beli Kartu
+                </button>
+                <button type="button" className="btn btn-secondary" disabled={!isMyTurn || !canReserve} onClick={() => handleReserveCard(selectedCard)}>
+                  🔖 Reservasi Kartu {reservedCount >= 3 ? '(Maks 3)' : ''}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCard(null)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#94a3b8',
+                    padding: '0.4rem',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  Batal
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
+
+      {/* Modal Reservasi Kartu dari Deck - Dipindahkan ke Layar Utama (document.body) */}
+      {selectedDeckTier &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="modal-overlay" onClick={() => setSelectedDeckTier(null)}>
+            <div className="card modal-content" style={{ maxWidth: '380px', width: '100%', padding: '1.5rem', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+              <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.75rem' }}>Reservasi Deck Tier {selectedDeckTier}</h4>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.25rem' }}>Ambil 1 kartu tertutup dari atas tumpukan Tier {selectedDeckTier} dan 1 token emas (jika tersedia di bank).</p>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button type="button" onClick={() => setSelectedDeckTier(null)} className="btn btn-secondary" style={{ flex: 1 }}>
+                  Batal
+                </button>
+                <button type="button" onClick={() => handleReserveDeck(selectedDeckTier)} className="btn btn-emerald" style={{ flex: 1 }} disabled={!isMyTurn || !canReserve}>
+                  Reservasi
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import Lobby from '../components/Lobby';
@@ -196,89 +197,81 @@ export default function Room() {
 
       {currentStatus === 'playing' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Modal Discard Token jika > 10 */}
-          {needsDiscard && (
-            <div
-              style={{
-                position: 'fixed',
-                inset: 0,
-                background: 'rgba(0, 0, 0, 0.85)',
-                zIndex: 2000,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '1rem',
-              }}
-            >
-              <div className="card" style={{ maxWidth: '420px', width: '100%', textAlign: 'center', padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f87171', marginBottom: '0.5rem' }}>⚠️ Batas Token Terlampaui</h3>
-                <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                  Anda memiliki <strong>{myTotalTokens}</strong> token (maksimal 10). Silakan pilih <strong>{tokensToDiscard}</strong> token untuk dikembalikan ke bank.
-                </p>
+          {/* Modal Discard Token jika > 10 - Dipindahkan ke Layar Utama (document.body) */}
+          {needsDiscard &&
+            typeof document !== 'undefined' &&
+            createPortal(
+              <div className="modal-overlay">
+                <div className="card modal-content" style={{ maxWidth: '440px', width: '100%', textAlign: 'center', padding: '1.75rem', border: '1px solid #ef4444' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f87171', marginBottom: '0.5rem' }}>⚠️ Batas Token Terlampaui</h3>
+                  <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                    Anda memiliki <strong>{myTotalTokens}</strong> token (maksimal 10). Silakan pilih <strong>{tokensToDiscard}</strong> token untuk dikembalikan ke bank.
+                  </p>
 
-                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-                  {ALL_GEMS.map((color) => {
-                    const meta = GEM_METADATA[color];
-                    const owned = myTokens[color] || 0;
-                    const discarded = discardSelection[color] || 0;
-                    if (owned <= 0) return null;
+                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                    {ALL_GEMS.map((color) => {
+                      const meta = GEM_METADATA[color];
+                      const owned = myTokens[color] || 0;
+                      const discarded = discardSelection[color] || 0;
+                      if (owned <= 0) return null;
 
-                    return (
-                      <div key={color} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                        <div
-                          className="gem-token"
-                          style={{
-                            background: meta.bgColor,
-                            border: `2px solid ${meta.borderColor}`,
-                            color: meta.textColor,
-                            width: '44px',
-                            height: '44px',
-                            fontSize: '0.85rem',
-                          }}
-                        >
-                          <span>{meta.symbol}</span>
-                          <span>{owned - discarded}</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '2px' }}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setDiscardSelection((prev) => ({
-                                ...prev,
-                                [color]: Math.max(0, (prev[color] || 0) - 1),
-                              }))
-                            }
-                            disabled={discarded <= 0}
-                            style={{ padding: '2px 6px', fontSize: '0.75rem', background: '#334155', color: '#fff', border: 'none', borderRadius: '3px' }}
+                      return (
+                        <div key={color} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                          <div
+                            className="gem-token"
+                            style={{
+                              background: meta.bgColor,
+                              border: `2px solid ${meta.borderColor}`,
+                              color: meta.textColor,
+                              width: '44px',
+                              height: '44px',
+                              fontSize: '0.85rem',
+                            }}
                           >
-                            -
-                          </button>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 700, padding: '0 4px' }}>{discarded}</span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setDiscardSelection((prev) => ({
-                                ...prev,
-                                [color]: Math.min(owned, (prev[color] || 0) + 1),
-                              }))
-                            }
-                            disabled={discarded >= owned || selectedDiscardCount >= tokensToDiscard}
-                            style={{ padding: '2px 6px', fontSize: '0.75rem', background: '#334155', color: '#fff', border: 'none', borderRadius: '3px' }}
-                          >
-                            +
-                          </button>
+                            <span>{meta.symbol}</span>
+                            <span>{owned - discarded}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '2px' }}>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDiscardSelection((prev) => ({
+                                  ...prev,
+                                  [color]: Math.max(0, (prev[color] || 0) - 1),
+                                }))
+                              }
+                              disabled={discarded <= 0}
+                              style={{ padding: '2px 6px', fontSize: '0.75rem', background: '#334155', color: '#fff', border: 'none', borderRadius: '3px' }}
+                            >
+                              -
+                            </button>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 700, padding: '0 4px' }}>{discarded}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDiscardSelection((prev) => ({
+                                  ...prev,
+                                  [color]: Math.min(owned, (prev[color] || 0) + 1),
+                                }))
+                              }
+                              disabled={discarded >= owned || selectedDiscardCount >= tokensToDiscard}
+                              style={{ padding: '2px 6px', fontSize: '0.75rem', background: '#334155', color: '#fff', border: 'none', borderRadius: '3px' }}
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+
+                  <button type="button" className="btn btn-primary" style={{ width: '100%' }} disabled={selectedDiscardCount !== tokensToDiscard} onClick={handleConfirmDiscard}>
+                    Kembalikan Token ({selectedDiscardCount}/{tokensToDiscard})
+                  </button>
                 </div>
-
-                <button type="button" className="btn btn-primary" style={{ width: '100%' }} disabled={selectedDiscardCount !== tokensToDiscard} onClick={handleConfirmDiscard}>
-                  Kembalikan Token ({selectedDiscardCount}/{tokensToDiscard})
-                </button>
-              </div>
-            </div>
-          )}
+              </div>,
+              document.body,
+            )}
 
           {/* Layout Permainan Utama: Card Player di sebelah kiri, Meja di sebelah kanan */}
           <div className="game-layout">
