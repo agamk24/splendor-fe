@@ -9,6 +9,7 @@ import PlayerPanel from '../components/PlayerPanel';
 import EndGameScreen from '../components/EndGameScreen';
 import ToastAlert from '../components/ToastAlert';
 import { ALL_GEMS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
+import { sound } from '../utils/soundManager';
 
 export default function Room() {
   const { roomId: urlRoomId } = useParams();
@@ -29,6 +30,7 @@ export default function Room() {
   // Local state
   const [inputName, setInputName] = useState('');
   const [joinError, setJoinError] = useState('');
+  const [isMuted, setIsMuted] = useState(sound.isMuted());
   const [discardSelection, setDiscardSelection] = useState({
     white: 0,
     blue: 0,
@@ -142,7 +144,7 @@ export default function Room() {
   const currentStatus = gameState?.status || 'waiting';
 
   return (
-    <div className="container" style={{ paddingTop: '1rem', paddingBottom: '2.5rem' }}>
+    <div className="container room-container" style={{ paddingTop: '1rem', paddingBottom: '2.5rem' }}>
       {/* Toast Alert Auto-Hide untuk Error Action */}
       <ToastAlert />
 
@@ -168,6 +170,17 @@ export default function Room() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            onClick={() => {
+              sound.toggleMute();
+              setIsMuted(sound.isMuted());
+            }}
+            className="btn btn-secondary"
+            style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
+            title={isMuted ? 'Suara Dinonaktifkan (Klik untuk aktifkan)' : 'Suara Aktif (Klik untuk matikan)'}
+          >
+            {isMuted ? '🔇' : '🔊'}
+          </button>
           <span className={`badge ${isConnected ? 'badge-connected' : 'badge-disconnected'}`}>
             <span className="badge-dot" />
             {isConnected ? 'Online' : 'Offline'}
@@ -267,29 +280,28 @@ export default function Room() {
             </div>
           )}
 
-          {/* Noble Row di bagian atas */}
-          <NobleRow />
+          {/* Layout Permainan Utama: Card Player di sebelah kiri, Meja di sebelah kanan */}
+          <div className="game-layout">
+            {/* Kolom Kiri: Card Player (Panel Pemain) */}
+            <aside className="game-players-column">
+              <div className="players-list">
+                {players.map((p, idx) => (
+                  <PlayerPanel key={p.id || idx} player={p} index={idx} />
+                ))}
+              </div>
+            </aside>
 
-          {/* Area Meja Utama: Card Table & Token Bank */}
-          <div className="game-board-grid">
-            <CardTable />
-            <BoardBank />
-          </div>
+            {/* Kolom Kanan: Papan Permainan (Bangsawan, Kartu Meja, & Bank Permata) */}
+            <main className="game-table-column">
+              {/* Noble Row di bagian atas papan */}
+              <NobleRow />
 
-          {/* Area Panel Pemain */}
-          <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.75rem' }}>Pemain ({players.length})</h3>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '1rem',
-              }}
-            >
-              {players.map((p, idx) => (
-                <PlayerPanel key={p.id || idx} player={p} index={idx} />
-              ))}
-            </div>
+              {/* Area Meja Utama: Card Table & Token Bank */}
+              <div className="game-board-grid">
+                <CardTable />
+                <BoardBank />
+              </div>
+            </main>
           </div>
         </div>
       )}

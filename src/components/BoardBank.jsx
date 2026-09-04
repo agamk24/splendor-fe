@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { GEM_COLORS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
+import { sound } from '../utils/soundManager';
 
 export default function BoardBank() {
   const gameState = useGameStore((state) => state.gameState);
@@ -63,12 +64,14 @@ export default function BoardBank() {
       if (selectedColorsCount >= 3) return;
 
       setSelected((prev) => ({ ...prev, [color]: 1 }));
+      sound.playTokenSelect();
     }
     // Skenario 2: Sudah memilih 1 token warna ini, ingin ambil token ke-2 (warna sama)
     else if (currentCount === 1) {
       // Hanya diperbolehkan jika tidak ada warna lain yang dipilih dan stok bank >= 4
       if (totalSelected === 1 && available >= 4) {
         setSelected((prev) => ({ ...prev, [color]: 2 }));
+        sound.playTokenSelect();
       }
     }
   };
@@ -88,6 +91,8 @@ export default function BoardBank() {
 
   const handleConfirm = () => {
     if (!isValidSelection || !isMyTurn) return;
+
+    sound.playTakeTokens();
 
     // Backend punya dua aksi terpisah, bukan satu `take_tokens`.
     if (hasDouble) {

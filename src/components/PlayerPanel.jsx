@@ -71,93 +71,138 @@ export default function PlayerPanel({ player, index }) {
     <div
       className={`card ${isCurrentTurn ? 'player-active' : ''}`}
       style={{
-        padding: '1.25rem',
+        padding: '0.6rem 0.75rem',
         border: isCurrentTurn ? '2px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.1)',
-        background: isMe ? 'rgba(30, 41, 59, 0.85)' : 'rgba(15, 23, 42, 0.75)',
+        background: isMe ? 'rgba(30, 41, 59, 0.9)' : 'rgba(15, 23, 42, 0.75)',
         position: 'relative',
+        borderRadius: '8px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.35rem',
       }}
     >
-      {/* Turn Banner */}
-      {isCurrentTurn && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '-10px',
-            right: '12px',
-            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            color: '#000',
-            fontSize: '0.7rem',
-            fontWeight: 800,
-            padding: '2px 8px',
-            borderRadius: '9999px',
-            letterSpacing: '0.5px',
-            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.5)',
-          }}
-        >
-          GILIRAN AKTIF
-        </div>
-      )}
+      {/* Baris 1: Identitas Pemain (Kiri) & Status Token / Poin (Kanan) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0, flex: 1 }}>
+          {isCurrentTurn && (
+            <span
+              style={{
+                fontSize: '0.62rem',
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                color: '#000',
+                fontWeight: 800,
+                padding: '1px 5px',
+                borderRadius: '3px',
+                letterSpacing: '0.3px',
+                boxShadow: '0 1px 4px rgba(245, 158, 11, 0.4)',
+                flexShrink: 0,
+              }}
+            >
+              GILIRAN
+            </span>
+          )}
 
-      {/* Header Pemain & Poin */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>{player.name}</span>
-            {isMe && (
-              <span
-                style={{
-                  fontSize: '0.65rem',
-                  background: 'rgba(59, 130, 246, 0.3)',
-                  color: '#60a5fa',
-                  padding: '1px 5px',
-                  borderRadius: '4px',
-                  fontWeight: 700,
-                }}
-              >
-                Anda
-              </span>
-            )}
-            {/* Indikator Terputus sesuai spesifikasi nomor 11 */}
-            {!isConnected && (
-              <span
-                style={{
-                  fontSize: '0.65rem',
-                  background: 'rgba(239, 68, 68, 0.25)',
-                  color: '#f87171',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  padding: '1px 5px',
-                  borderRadius: '4px',
-                  fontWeight: 700,
-                }}
-              >
-                Terputus
-              </span>
-            )}
-          </div>
-          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-            Total Token: <strong style={{ color: totalTokens > 10 ? '#f87171' : '#cbd5e1' }}>{totalTokens}</strong> / 10
+          <span
+            style={{
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              color: isCurrentTurn ? '#fbbf24' : '#f8fafc',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: isMe ? '100px' : '130px',
+            }}
+            title={player.name}
+          >
+            {player.name}
           </span>
+
+          {isMe && (
+            <span
+              style={{
+                fontSize: '0.62rem',
+                background: 'rgba(59, 130, 246, 0.3)',
+                color: '#60a5fa',
+                padding: '1px 4px',
+                borderRadius: '3px',
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              Anda
+            </span>
+          )}
+
+          {!isConnected && (
+            <span
+              style={{
+                fontSize: '0.62rem',
+                background: 'rgba(239, 68, 68, 0.25)',
+                color: '#f87171',
+                padding: '1px 4px',
+                borderRadius: '3px',
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              Offline
+            </span>
+          )}
         </div>
 
-        {/* Poin Prestise */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.3))',
-            border: '1px solid #f59e0b',
-            borderRadius: '8px',
-            padding: '0.3rem 0.6rem',
-            textAlign: 'center',
-          }}
-        >
-          <span style={{ fontSize: '0.65rem', color: '#fcd34d', display: 'block', textTransform: 'uppercase', fontWeight: 700 }}>Poin</span>
-          <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fbbf24' }}>{totalPoints}</span>
+        {/* Kanan Header: Token Ringkas & Poin */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+          <span
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              color: totalTokens > 10 ? '#f87171' : '#94a3b8',
+              background: 'rgba(15, 23, 42, 0.6)',
+              padding: '1px 5px',
+              borderRadius: '4px',
+              border: `1px solid ${totalTokens > 10 ? '#ef4444' : 'rgba(255, 255, 255, 0.08)'}`,
+            }}
+            title={`Total token yang dipegang: ${totalTokens}/10`}
+          >
+            🪙 {totalTokens}/10
+          </span>
+
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.35))',
+              border: '1px solid #f59e0b',
+              borderRadius: '5px',
+              padding: '1px 6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '3px',
+            }}
+            title={`Poin Prestise: ${totalPoints}`}
+          >
+            <span style={{ fontSize: '0.7rem' }}>👑</span>
+            <span style={{ fontSize: '0.92rem', fontWeight: 900, color: '#fbbf24' }}>{totalPoints}</span>
+          </div>
         </div>
       </div>
 
-      {/* Baris Bonus Kartu (Diskon Permanen) */}
-      <div style={{ marginBottom: '0.85rem' }}>
-        <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.3rem' }}>Bonus Kartu Dimiliki (Diskon):</span>
-        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+      {/* Baris 2: Bonus Kartu Dimiliki (Diskon) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <span
+          style={{
+            fontSize: '0.68rem',
+            color: '#94a3b8',
+            width: '45px',
+            flexShrink: 0,
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2px',
+          }}
+          title="Bonus diskon permanen dari kartu yang sudah dibeli"
+        >
+          <span>🃏</span> Bonus
+        </span>
+        <div style={{ display: 'flex', gap: '0.25rem', flex: 1, justifyContent: 'space-between' }}>
           {GEM_COLORS.map((color) => {
             const meta = GEM_METADATA[color];
             const count = bonuses[color] || 0;
@@ -167,18 +212,21 @@ export default function PlayerPanel({ player, index }) {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '3px',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  background: count > 0 ? meta.bgColor : 'rgba(15, 23, 42, 0.5)',
+                  justifyContent: 'center',
+                  gap: '2px',
+                  padding: '1px 3px',
+                  borderRadius: '3px',
+                  background: count > 0 ? meta.bgColor : 'rgba(15, 23, 42, 0.45)',
                   border: `1px solid ${count > 0 ? meta.borderColor : 'rgba(255, 255, 255, 0.05)'}`,
                   color: count > 0 ? meta.textColor : '#64748b',
-                  fontSize: '0.75rem',
+                  fontSize: '0.72rem',
                   fontWeight: 700,
+                  flex: 1,
+                  minWidth: 0,
                 }}
                 title={`${meta.indonesian}: ${count} bonus kartu`}
               >
-                <span>{meta.symbol}</span>
+                <span style={{ fontSize: '0.68rem' }}>{meta.symbol}</span>
                 <span>{count}</span>
               </div>
             );
@@ -186,10 +234,24 @@ export default function PlayerPanel({ player, index }) {
         </div>
       </div>
 
-      {/* Baris Token Permata Dimiliki */}
-      <div style={{ marginBottom: '0.85rem' }}>
-        <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.3rem' }}>Token Permata Dimiliki:</span>
-        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+      {/* Baris 3: Token Permata Dimiliki */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <span
+          style={{
+            fontSize: '0.68rem',
+            color: '#94a3b8',
+            width: '45px',
+            flexShrink: 0,
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2px',
+          }}
+          title="Token permata yang dipegang saat ini"
+        >
+          <span>🪙</span> Token
+        </span>
+        <div style={{ display: 'flex', gap: '0.25rem', flex: 1, justifyContent: 'space-between' }}>
           {ALL_GEMS.map((color) => {
             const meta = GEM_METADATA[color];
             const count = tokens[color] || 0;
@@ -199,18 +261,21 @@ export default function PlayerPanel({ player, index }) {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '3px',
-                  padding: '2px 6px',
-                  borderRadius: '50px',
-                  background: count > 0 ? meta.bgColor : 'rgba(15, 23, 42, 0.4)',
+                  justifyContent: 'center',
+                  gap: '2px',
+                  padding: '1px 3px',
+                  borderRadius: '10px',
+                  background: count > 0 ? meta.bgColor : 'rgba(15, 23, 42, 0.35)',
                   border: `1px solid ${count > 0 ? meta.borderColor : 'rgba(255, 255, 255, 0.05)'}`,
                   color: count > 0 ? meta.textColor : '#475569',
-                  fontSize: '0.75rem',
+                  fontSize: '0.72rem',
                   fontWeight: 700,
+                  flex: 1,
+                  minWidth: 0,
                 }}
                 title={`${meta.indonesian}: ${count} token`}
               >
-                <span>{meta.symbol}</span>
+                <span style={{ fontSize: '0.65rem' }}>{meta.symbol}</span>
                 <span>{count}</span>
               </div>
             );
@@ -218,75 +283,89 @@ export default function PlayerPanel({ player, index }) {
         </div>
       </div>
 
-      {/* Bagian Kartu Reservasi */}
-      <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Kartu Reservasi ({reservedCount}/3):</span>
-          {isMe && reservedCount > 0 && <span style={{ fontSize: '0.7rem', color: '#38bdf8' }}>Klik kartu untuk membeli</span>}
-        </div>
+      {/* Baris 4: Kartu Reservasi (Hanya ditampilkan jika ada kartu yang direservasi) */}
+      {reservedCount > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+            paddingTop: '0.3rem',
+            marginTop: '0.1rem',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '0.68rem',
+              color: '#94a3b8',
+              width: '45px',
+              flexShrink: 0,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px',
+            }}
+            title="Kartu yang sedang direservasi (maksimal 3)"
+          >
+            <span>📦</span> {reservedCount}/3
+          </span>
 
-        {reservedCount === 0 ? (
-          <span style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>Tidak ada kartu yang direservasi</span>
-        ) : isMe ? (
-          /* Pemilik Sendiri: Tampilkan detail biaya kartu */
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {Array.isArray(reservedCards) &&
-              reservedCards.map((card, rIdx) => {
-                const bonusColor = normalizeColor(card.gem || card.bonus || card.color);
-                const meta = GEM_METADATA[bonusColor] || GEM_METADATA.white;
-                const affordable = canAffordReservedCard(card);
-                const points = card.points ?? card.prestige ?? 0;
+          <div style={{ display: 'flex', gap: '0.3rem', flex: 1, flexWrap: 'wrap' }}>
+            {isMe
+              ? reservedCards.map((card, rIdx) => {
+                  const bonusColor = normalizeColor(card.gem || card.bonus || card.color);
+                  const meta = GEM_METADATA[bonusColor] || GEM_METADATA.white;
+                  const affordable = canAffordReservedCard(card);
+                  const points = card.points ?? card.prestige ?? 0;
 
-                return (
-                  <div
-                    key={card.id || `r-${rIdx}`}
-                    onClick={() => setSelectedReservedCard(card)}
+                  return (
+                    <button
+                      key={card.id || `r-${rIdx}`}
+                      type="button"
+                      onClick={() => setSelectedReservedCard(card)}
+                      style={{
+                        background: affordable ? 'rgba(16, 185, 129, 0.15)' : 'rgba(15, 23, 42, 0.8)',
+                        border: affordable ? '1px solid #34d399' : `1px solid ${meta.borderColor}`,
+                        borderRadius: '4px',
+                        padding: '1px 5px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        fontSize: '0.7rem',
+                        color: '#f8fafc',
+                      }}
+                      title={affordable ? 'Klik untuk membeli kartu ini!' : 'Klik untuk melihat rincian biaya kartu ini'}
+                    >
+                      <span>{meta.symbol}</span>
+                      {points > 0 && <span style={{ fontWeight: 800, color: '#fbbf24' }}>{points}p</span>}
+                      {affordable && <span style={{ fontSize: '0.6rem', color: '#34d399', fontWeight: 800 }}>✓</span>}
+                    </button>
+                  );
+                })
+              : Array.from({ length: reservedCount }).map((_, rIdx) => (
+                  <span
+                    key={`other-r-${rIdx}`}
                     style={{
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      border: affordable ? '1px solid #34d399' : `1px solid ${meta.borderColor}`,
-                      borderRadius: '6px',
-                      padding: '0.35rem 0.5rem',
-                      cursor: 'pointer',
-                      display: 'flex',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '4px',
+                      padding: '1px 5px',
+                      fontSize: '0.65rem',
+                      color: '#94a3b8',
+                      display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.4rem',
-                      fontSize: '0.75rem',
+                      gap: '2px',
                     }}
-                    title="Klik untuk opsi membeli kartu reservasi ini"
+                    title="Kartu direservasi oleh lawan"
                   >
-                    <span>{meta.symbol}</span>
-                    <span style={{ fontWeight: 700, color: '#fbbf24' }}>{points > 0 ? `${points}p` : ''}</span>
-                    {affordable && <span style={{ fontSize: '0.65rem', color: '#34d399', fontWeight: 700 }}>✓ Beli</span>}
-                  </div>
-                );
-              })}
+                    🔒 Kartu {rIdx + 1}
+                  </span>
+                ))}
           </div>
-        ) : (
-          /* Pemain Lain: Hanya lihat jumlah reservasi + indikator "reserved" tanpa detail biaya */
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
-            {Array.from({ length: reservedCount }).map((_, rIdx) => (
-              <div
-                key={`other-r-${rIdx}`}
-                style={{
-                  background: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '6px',
-                  padding: '0.25rem 0.5rem',
-                  fontSize: '0.7rem',
-                  color: '#94a3b8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                }}
-                title="Kartu Tersembunyi (Detail hanya dapat dilihat oleh pemilik kartu)"
-              >
-                <span>🔒</span>
-                <span>Reserved</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Modal Beli Kartu Reservasi Sendiri */}
       {selectedReservedCard && isMe && (
