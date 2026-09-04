@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { GEM_COLORS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 import { sound } from '../utils/soundManager';
+import GemIcon from './GemIcon';
+import CardIllustration from './CardIllustration';
 
 export default function CardTable() {
   const gameState = useGameStore((state) => state.gameState);
@@ -184,19 +186,25 @@ export default function CardTable() {
                         height: '145px',
                         width: '105px',
                         borderTop: `4px solid ${bonusMeta.borderColor}`,
+                        position: 'relative',
+                        overflow: 'hidden',
                       }}
                     >
+                      {/* Ilustrasi Artwork Kartu */}
+                      <CardIllustration card={card} />
+
                       {/* Header Kartu: Poin & Bonus Permata */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>{points > 0 ? points : ''}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 2 }}>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc', textShadow: '0 2px 4px rgba(0,0,0,0.9)' }}>{points > 0 ? points : ''}</span>
                         <span
                           style={{
-                            fontSize: '1rem',
-                            filter: `drop-shadow(0 0 4px ${bonusMeta.glowColor})`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            filter: `drop-shadow(0 0 5px ${bonusMeta.glowColor})`,
                           }}
                           title={`Bonus: ${bonusMeta.indonesian}`}
                         >
-                          {bonusMeta.symbol}
+                          <GemIcon color={bonusColor} size={22} />
                         </span>
                       </div>
 
@@ -208,6 +216,8 @@ export default function CardTable() {
                           gap: '3px',
                           marginTop: 'auto',
                           alignItems: 'flex-start',
+                          position: 'relative',
+                          zIndex: 2,
                         }}
                       >
                         {card.cost &&
@@ -288,44 +298,54 @@ export default function CardTable() {
                   borderRadius: '8px',
                   padding: '1rem',
                   marginBottom: '1.25rem',
+                  position: 'relative',
+                  overflow: 'hidden',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ color: '#94a3b8' }}>Bonus Permata:</span>
-                  <span style={{ fontWeight: 700 }}>
-                    {GEM_METADATA[normalizeColor(selectedCard.gem || selectedCard.bonus || selectedCard.color)]?.symbol} {GEM_METADATA[normalizeColor(selectedCard.gem || selectedCard.bonus || selectedCard.color)]?.indonesian}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ color: '#94a3b8' }}>Poin Prestise:</span>
-                  <span style={{ fontWeight: 700, color: '#fbbf24' }}>{selectedCard.points ?? selectedCard.prestige ?? 0} Poin</span>
-                </div>
+                <CardIllustration card={selectedCard} style={{ opacity: 0.25 }} />
 
-                <div style={{ marginTop: '0.75rem' }}>
-                  <span style={{ color: '#94a3b8', fontSize: '0.85rem', display: 'block', marginBottom: '0.4rem' }}>Biaya Pembelian:</span>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {selectedCard.cost &&
-                      Object.entries(selectedCard.cost).map(([cKey, costAmount]) => {
-                        if (costAmount <= 0) return null;
-                        const c = normalizeColor(cKey);
-                        const meta = GEM_METADATA[c];
-                        return (
-                          <span
-                            key={cKey}
-                            style={{
-                              padding: '0.2rem 0.5rem',
-                              background: meta?.bgColor,
-                              border: `1px solid ${meta?.borderColor}`,
-                              borderRadius: '6px',
-                              color: meta?.textColor,
-                              fontSize: '0.85rem',
-                              fontWeight: 700,
-                            }}
-                          >
-                            {meta?.symbol} {costAmount}
-                          </span>
-                        );
-                      })}
+                <div style={{ position: 'relative', zIndex: 2 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#94a3b8' }}>Bonus Permata:</span>
+                    <span style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <GemIcon color={selectedCard.gem || selectedCard.bonus || selectedCard.color} size={18} />
+                      {GEM_METADATA[normalizeColor(selectedCard.gem || selectedCard.bonus || selectedCard.color)]?.indonesian}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#94a3b8' }}>Poin Prestise:</span>
+                    <span style={{ fontWeight: 700, color: '#fbbf24' }}>{selectedCard.points ?? selectedCard.prestige ?? 0} Poin</span>
+                  </div>
+
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <span style={{ color: '#94a3b8', fontSize: '0.85rem', display: 'block', marginBottom: '0.4rem' }}>Biaya Pembelian:</span>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {selectedCard.cost &&
+                        Object.entries(selectedCard.cost).map(([cKey, costAmount]) => {
+                          if (costAmount <= 0) return null;
+                          const c = normalizeColor(cKey);
+                          const meta = GEM_METADATA[c];
+                          return (
+                            <span
+                              key={cKey}
+                              style={{
+                                padding: '0.2rem 0.5rem',
+                                background: meta?.bgColor,
+                                border: `1px solid ${meta?.borderColor}`,
+                                borderRadius: '6px',
+                                color: meta?.textColor,
+                                fontSize: '0.85rem',
+                                fontWeight: 700,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              <GemIcon color={c} size={15} /> {costAmount}
+                            </span>
+                          );
+                        })}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
 import { GEM_METADATA, normalizeColor } from '../utils/gemUtils';
+import NobleIllustration from './NobleIllustration';
 
 export default function NobleRow() {
   const gameState = useGameStore((state) => state.gameState);
@@ -27,15 +28,18 @@ export default function NobleRow() {
           const reqs = noble.requirement || {};
 
           return (
-            <div key={noble.id || `noble-${idx}`} className="noble-tile" title={`Bangsawan: Memberikan ${points} poin saat Anda mengumpulkan kartu yang disyaratkan`}>
+            <div key={noble.id || `noble-${idx}`} className="noble-tile" title={`Bangsawan: Memberikan ${points} poin saat Anda mengumpulkan kartu yang disyaratkan`} style={{ position: 'relative', overflow: 'hidden' }}>
+              {/* Ilustrasi Artwork Bangsawan */}
+              <NobleIllustration noble={noble} index={idx} />
+
               {/* Header Bangsawan: Poin Prestise */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', position: 'relative', zIndex: 2 }}>
                 <span style={{ fontSize: '0.85rem' }}>👑</span>
                 <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fbbf24', textShadow: '0 0 8px rgba(245, 158, 11, 0.4)' }}>{points}</span>
               </div>
 
-              {/* Persyaratan Bonus Kartu */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: 'auto' }}>
+              {/* Persyaratan Bonus Kartu (Mendatar / Horizontal, Tanpa Icon Permata) */}
+              <div style={{ display: 'flex', gap: '5px', marginTop: 'auto', position: 'relative', zIndex: 2, justifyContent: 'flex-start' }}>
                 {Object.entries(reqs).map(([cKey, reqCount]) => {
                   if (reqCount <= 0) return null;
                   const color = normalizeColor(cKey);
@@ -47,19 +51,20 @@ export default function NobleRow() {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
+                        justifyContent: 'center',
+                        width: '24px',
+                        height: '24px',
                         background: meta?.bgColor || '#334155',
-                        border: `1px solid ${meta?.borderColor || '#475569'}`,
+                        border: `1.5px solid ${meta?.borderColor || '#475569'}`,
                         borderRadius: '4px',
-                        padding: '2px 6px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        fontWeight: 800,
                         color: meta?.textColor || '#fff',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
                       }}
                       title={`Syarat: ${reqCount} kartu bonus ${meta?.indonesian || color}`}
                     >
-                      <span>{meta?.symbol}</span>
-                      <span style={{ fontWeight: 800 }}>{reqCount}</span>
+                      {reqCount}
                     </div>
                   );
                 })}

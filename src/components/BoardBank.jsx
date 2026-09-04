@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { GEM_COLORS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 import { sound } from '../utils/soundManager';
+import GemIcon from './GemIcon';
 
 export default function BoardBank() {
   const gameState = useGameStore((state) => state.gameState);
@@ -135,7 +136,7 @@ export default function BoardBank() {
               disabled={isDisabled}
               title={`${meta.indonesian} (${count} tersedia). Klik untuk memilih.`}
             >
-              <span style={{ fontSize: '0.85rem' }}>{meta.symbol}</span>
+              <GemIcon color={color} size={18} />
               <span style={{ fontSize: '0.95rem', fontWeight: 800 }}>{count}</span>
             </button>
           );
@@ -157,7 +158,7 @@ export default function BoardBank() {
               }}
               title={`Emas (${goldCount} tersedia) — Diperoleh otomatis saat reservasi kartu.`}
             >
-              <span style={{ fontSize: '0.85rem' }}>{meta.symbol}</span>
+              <GemIcon color="gold" size={18} />
               <span style={{ fontSize: '0.95rem', fontWeight: 800 }}>{goldCount}</span>
             </div>
           );
@@ -209,7 +210,7 @@ export default function BoardBank() {
                   }}
                   title="Klik untuk mengurangi"
                 >
-                  <span>{meta.symbol}</span>
+                  <GemIcon color={color} size={15} />
                   <span>&times;{count}</span>
                   <span style={{ fontSize: '0.7rem', color: '#ef4444', marginLeft: '2px' }}>✕</span>
                 </button>

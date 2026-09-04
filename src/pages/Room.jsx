@@ -11,6 +11,7 @@ import EndGameScreen from '../components/EndGameScreen';
 import ToastAlert from '../components/ToastAlert';
 import { ALL_GEMS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 import { sound } from '../utils/soundManager';
+import GemIcon from '../components/GemIcon';
 
 export default function Room() {
   const { roomId: urlRoomId } = useParams();
@@ -228,7 +229,7 @@ export default function Room() {
                               fontSize: '0.85rem',
                             }}
                           >
-                            <span>{meta.symbol}</span>
+                            <GemIcon color={color} size={18} />
                             <span>{owned - discarded}</span>
                           </div>
                           <div style={{ display: 'flex', gap: '2px' }}>

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { GEM_COLORS, ALL_GEMS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
+import GemIcon from './GemIcon';
+import CardIllustration from './CardIllustration';
 
 export default function PlayerPanel({ player, index }) {
   const gameState = useGameStore((state) => state.gameState);
@@ -227,7 +229,7 @@ export default function PlayerPanel({ player, index }) {
                 }}
                 title={`${meta.indonesian}: ${count} bonus kartu`}
               >
-                <span style={{ fontSize: '0.68rem' }}>{meta.symbol}</span>
+                <GemIcon color={color} size={12} />
                 <span>{count}</span>
               </div>
             );
@@ -276,7 +278,7 @@ export default function PlayerPanel({ player, index }) {
                 }}
                 title={`${meta.indonesian}: ${count} token`}
               >
-                <span style={{ fontSize: '0.65rem' }}>{meta.symbol}</span>
+                <GemIcon color={color} size={12} />
                 <span>{count}</span>
               </div>
             );
@@ -339,7 +341,7 @@ export default function PlayerPanel({ player, index }) {
                       }}
                       title={affordable ? 'Klik untuk membeli kartu ini!' : 'Klik untuk melihat rincian biaya kartu ini'}
                     >
-                      <span>{meta.symbol}</span>
+                      <GemIcon color={bonusColor} size={12} />
                       {points > 0 && <span style={{ fontWeight: 800, color: '#fbbf24' }}>{points}p</span>}
                       {affordable && <span style={{ fontSize: '0.6rem', color: '#34d399', fontWeight: 800 }}>✓</span>}
                     </button>
@@ -376,43 +378,50 @@ export default function PlayerPanel({ player, index }) {
           <div className="modal-overlay" onClick={() => setSelectedReservedCard(null)}>
             <div className="card modal-content" style={{ maxWidth: '360px', width: '100%', padding: '1.5rem', border: '1px solid #38bdf8' }} onClick={(e) => e.stopPropagation()}>
               <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.75rem' }}>Beli Kartu Reservasi</h4>
-              <div style={{ background: 'rgba(15, 23, 42, 0.7)', borderRadius: '6px', padding: '0.75rem', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                  <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Bonus Permata:</span>
-                  <span style={{ fontWeight: 700 }}>
-                    {GEM_METADATA[normalizeColor(selectedReservedCard.gem || selectedReservedCard.bonus || selectedReservedCard.color)]?.symbol}{' '}
-                    {GEM_METADATA[normalizeColor(selectedReservedCard.gem || selectedReservedCard.bonus || selectedReservedCard.color)]?.indonesian}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                  <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Poin:</span>
-                  <span style={{ fontWeight: 700, color: '#fbbf24' }}>{selectedReservedCard.points ?? selectedReservedCard.prestige ?? 0} Poin</span>
-                </div>
-                <div style={{ marginTop: '0.5rem' }}>
-                  <span style={{ color: '#94a3b8', fontSize: '0.8rem', display: 'block', marginBottom: '0.25rem' }}>Biaya:</span>
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                    {selectedReservedCard.cost &&
-                      Object.entries(selectedReservedCard.cost).map(([cKey, amount]) => {
-                        if (amount <= 0) return null;
-                        const c = normalizeColor(cKey);
-                        const meta = GEM_METADATA[c];
-                        return (
-                          <span
-                            key={cKey}
-                            style={{
-                              padding: '1px 5px',
-                              background: meta?.bgColor,
-                              border: `1px solid ${meta?.borderColor}`,
-                              borderRadius: '4px',
-                              color: meta?.textColor,
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                            }}
-                          >
-                            {meta?.symbol} {amount}
-                          </span>
-                        );
-                      })}
+              <div style={{ background: 'rgba(15, 23, 42, 0.7)', borderRadius: '6px', padding: '0.75rem', marginBottom: '1rem', position: 'relative', overflow: 'hidden' }}>
+                <CardIllustration card={selectedReservedCard} style={{ opacity: 0.25 }} />
+
+                <div style={{ position: 'relative', zIndex: 2 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                    <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Bonus Permata:</span>
+                    <span style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <GemIcon color={selectedReservedCard.gem || selectedReservedCard.bonus || selectedReservedCard.color} size={16} />
+                      {GEM_METADATA[normalizeColor(selectedReservedCard.gem || selectedReservedCard.bonus || selectedReservedCard.color)]?.indonesian}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                    <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Poin:</span>
+                    <span style={{ fontWeight: 700, color: '#fbbf24' }}>{selectedReservedCard.points ?? selectedReservedCard.prestige ?? 0} Poin</span>
+                  </div>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <span style={{ color: '#94a3b8', fontSize: '0.8rem', display: 'block', marginBottom: '0.25rem' }}>Biaya:</span>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      {selectedReservedCard.cost &&
+                        Object.entries(selectedReservedCard.cost).map(([cKey, amount]) => {
+                          if (amount <= 0) return null;
+                          const c = normalizeColor(cKey);
+                          const meta = GEM_METADATA[c];
+                          return (
+                            <span
+                              key={cKey}
+                              style={{
+                                padding: '1px 5px',
+                                background: meta?.bgColor,
+                                border: `1px solid ${meta?.borderColor}`,
+                                borderRadius: '4px',
+                                color: meta?.textColor,
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                              }}
+                            >
+                              <GemIcon color={c} size={13} /> {amount}
+                            </span>
+                          );
+                        })}
+                    </div>
                   </div>
                 </div>
               </div>
