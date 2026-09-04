@@ -4,9 +4,11 @@ import { GEM_COLORS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 
 export default function CardTable() {
   const gameState = useGameStore((state) => state.gameState);
-  const myName = useGameStore((state) => state.myName);
-  const mySocketId = useGameStore((state) => state.mySocketId);
-  const sendPlayerAction = useGameStore((state) => state.sendPlayerAction);
+  const isMyTurn = useGameStore((state) => state.isMyTurn());
+  const me = useGameStore((state) => state.getMe());
+  const buyCard = useGameStore((state) => state.buyCard);
+  const reserveCardFromTable = useGameStore((state) => state.reserveCardFromTable);
+  const reserveCardFromDeck = useGameStore((state) => state.reserveCardFromDeck);
 
   // Selected card for action modal
   const [selectedCard, setSelectedCard] = useState(null);
@@ -14,14 +16,6 @@ export default function CardTable() {
 
   const tableCards = gameState?.tableCards || {};
   const decks = gameState?.decks || {};
-  const players = gameState?.players || [];
-  const currentIndex = gameState?.currentPlayerIndex ?? 0;
-  const currentPlayer = players[currentIndex];
-
-  const isMyTurn = Boolean(currentPlayer && (currentPlayer.name === myName || (mySocketId && (currentPlayer.id === mySocketId || currentPlayer.socketId === mySocketId))));
-
-  // Cari data pemain lokal untuk cek kemampuan membeli dan jumlah reservasi
-  const me = players.find((p) => p.name === myName || (mySocketId && (p.id === mySocketId || p.socketId === mySocketId)));
 
   // Helper untuk mendapatkan kartu di meja per tier (Tier 3 di atas, Tier 1 di bawah)
   const getCardsForTier = (tier) => {
@@ -47,22 +41,19 @@ export default function CardTable() {
   const canAffordCard = (card) => {
     if (!me || !card || !card.cost) return false;
 
-    // Hitung bonus permanen kartu yang dimiliki
+    // Bonus permanen berasal dari cardsOwned (nama field resmi backend).
     const bonuses = { white: 0, blue: 0, green: 0, red: 0, black: 0 };
-    if (Array.isArray(me.cards)) {
-      me.cards.forEach((c) => {
-        const bColor = normalizeColor(c.gem || c.bonus || c.color);
-        if (bonuses[bColor] !== undefined) bonuses[bColor]++;
-      });
-    } else if (me.bonuses) {
-      Object.entries(me.bonuses).forEach(([k, v]) => {
-        const normK = normalizeColor(k);
-        if (bonuses[normK] !== undefined) bonuses[normK] = v;
-      });
-    }
+    (me.cardsOwned || []).forEach((c) => {
+      const bColor = normalizeColor(c.bonus);
+      if (bonuses[bColor] !== undefined) bonuses[bColor]++;
+    });
 
-    const tokens = me.tokens || {};
-    const goldTokens = tokens.gold || tokens.yellow || 0;
+    // tokens dari server berkunci nama resmi, normalkan ke warna UI dulu.
+    const tokens = {};
+    Object.entries(me.tokens || {}).forEach(([serverColor, count]) => {
+      tokens[normalizeColor(serverColor)] = count;
+    });
+    const goldTokens = tokens.gold || 0;
     let shortage = 0;
 
     Object.entries(card.cost).forEach(([colorKey, requiredCount]) => {
@@ -79,39 +70,26 @@ export default function CardTable() {
     return shortage <= goldTokens;
   };
 
-  const reservedCount = (me?.reservedCards || me?.reserved || []).length;
+  const reservedCount = (me?.reservedCards || []).length;
   const canReserve = reservedCount < 3;
 
   // Handler aksi kartu
   const handleBuyCard = (card) => {
     if (!isMyTurn) return;
-    sendPlayerAction({
-      type: 'buy_card',
-      cardId: card.id,
-      card: card,
-      tier: card.tier,
-    });
+    // Kartu di meja: fromReserved false.
+    buyCard(card.id, false);
     setSelectedCard(null);
   };
 
   const handleReserveCard = (card) => {
     if (!isMyTurn || !canReserve) return;
-    sendPlayerAction({
-      type: 'reserve_card',
-      cardId: card.id,
-      card: card,
-      tier: card.tier,
-    });
+    reserveCardFromTable(card.id);
     setSelectedCard(null);
   };
 
   const handleReserveDeck = (tier) => {
     if (!isMyTurn || !canReserve) return;
-    sendPlayerAction({
-      type: 'reserve_card',
-      fromDeck: true,
-      tier: tier,
-    });
+    reserveCardFromDeck(tier);
     setSelectedDeckTier(null);
   };
 

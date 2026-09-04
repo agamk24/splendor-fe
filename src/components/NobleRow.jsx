@@ -23,7 +23,8 @@ export default function NobleRow() {
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
         {nobles.map((noble, idx) => {
           const points = noble.points ?? 3;
-          const reqs = noble.requirements || noble.cost || noble.reqs || {};
+          // Backend mengirim `requirement` (tunggal), berkunci nama permata resmi.
+          const reqs = noble.requirement || {};
 
           return (
             <div key={noble.id || `noble-${idx}`} className="noble-tile" title={`Bangsawan: Memberikan ${points} poin saat Anda mengumpulkan kartu yang disyaratkan`}>

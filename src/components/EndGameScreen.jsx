@@ -6,21 +6,13 @@ import { GEM_COLORS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 export default function EndGameScreen() {
   const navigate = useNavigate();
   const gameState = useGameStore((state) => state.gameState);
-  const myName = useGameStore((state) => state.myName);
-  const mySocketId = useGameStore((state) => state.mySocketId);
+  const checkIsMe = useGameStore((state) => state.isMe);
   const resetStore = useGameStore((state) => state.resetStore);
 
   const players = gameState?.players || [];
 
-  // Hitung jumlah kartu yang dibeli oleh setiap pemain
-  const getCardCount = (player) => {
-    if (Array.isArray(player.cards)) return player.cards.length;
-    if (player.cardCount !== undefined) return player.cardCount;
-    if (player.bonuses) {
-      return Object.values(player.bonuses).reduce((a, b) => a + b, 0);
-    }
-    return 0;
-  };
+  // Jumlah kartu perkembangan yang dibeli (nama field resmi backend).
+  const getCardCount = (player) => (player.cardsOwned || []).length;
 
   // Ranking sesuai aturan resmi Splendor:
   // 1. Poin prestise tertinggi
@@ -39,8 +31,9 @@ export default function EndGameScreen() {
     return cardsA - cardsB;
   });
 
-  const winner = rankedPlayers[0];
-  const isWinnerMe = winner && (winner.name === myName || (mySocketId && (winner.id === mySocketId || winner.socketId === mySocketId)));
+  // Pemenang ditentukan server (winnerId). Ranking lokal hanya untuk urutan tampilan.
+  const winner = players.find((p) => p.id === gameState?.winnerId) || rankedPlayers[0];
+  const isWinnerMe = checkIsMe(winner);
 
   const handleReturnHome = () => {
     // Sesuai brief: clear sessionStorage dan redirect ke /
@@ -87,17 +80,16 @@ export default function EndGameScreen() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {rankedPlayers.map((player, idx) => {
-            const isMe = player.name === myName || (mySocketId && (player.id === mySocketId || player.socketId === mySocketId));
+            const isMe = checkIsMe(player);
             const points = player.points ?? player.score ?? player.prestige ?? 0;
             const cardsCount = getCardCount(player);
-            const noblesCount = Array.isArray(player.nobles) ? player.nobles.length : 0;
 
             const rankMedals = ['🥇', '🥈', '🥉', '4️⃣'];
             const rankMedal = rankMedals[idx] || `${idx + 1}.`;
 
             return (
               <div
-                key={player.id || player.socketId || idx}
+                key={player.id || idx}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -144,7 +136,7 @@ export default function EndGameScreen() {
                       )}
                     </div>
                     <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                      {cardsCount} kartu dibeli {noblesCount > 0 ? `• ${noblesCount} bangsawan` : ''}
+                      {cardsCount} kartu dibeli
                     </span>
                   </div>
                 </div>

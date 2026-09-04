@@ -78,3 +78,33 @@ export const normalizeColor = (color) => {
   if (c === 'yellow') return 'gold';
   return c;
 };
+
+// Kebalikan normalizeColor: nama UI -> nama resmi backend.
+// Backend memakai emerald/sapphire/ruby/diamond/onyx, bukan warna.
+const SERVER_COLOR_BY_UI = {
+  white: 'diamond',
+  blue: 'sapphire',
+  green: 'emerald',
+  red: 'ruby',
+  black: 'onyx',
+  gold: 'gold',
+};
+
+export const toServerColor = (color) => {
+  if (!color) return null;
+  const c = String(color).toLowerCase();
+  return SERVER_COLOR_BY_UI[c] || c;
+};
+
+/**
+ * Ubah objek berkunci warna UI menjadi berkunci warna backend.
+ * Entri bernilai 0 dibuang agar payload tetap ramping.
+ */
+export const toServerTokenMap = (tokensByUiColor) => {
+  const result = {};
+  Object.entries(tokensByUiColor || {}).forEach(([uiColor, count]) => {
+    if (!count) return;
+    result[toServerColor(uiColor)] = count;
+  });
+  return result;
+};
