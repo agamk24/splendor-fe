@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { GEM_COLORS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
+import { sound } from '../utils/soundManager';
 
 export default function CardTable() {
   const gameState = useGameStore((state) => state.gameState);
@@ -76,6 +77,7 @@ export default function CardTable() {
   // Handler aksi kartu
   const handleBuyCard = (card) => {
     if (!isMyTurn) return;
+    sound.playBuyCard();
     // Kartu di meja: fromReserved false.
     buyCard(card.id, false);
     setSelectedCard(null);
@@ -83,12 +85,14 @@ export default function CardTable() {
 
   const handleReserveCard = (card) => {
     if (!isMyTurn || !canReserve) return;
+    sound.playReserveCard();
     reserveCardFromTable(card.id);
     setSelectedCard(null);
   };
 
   const handleReserveDeck = (tier) => {
     if (!isMyTurn || !canReserve) return;
+    sound.playReserveCard();
     reserveCardFromDeck(tier);
     setSelectedDeckTier(null);
   };
@@ -131,7 +135,7 @@ export default function CardTable() {
                 onClick={() => deckCount > 0 && isMyTurn && canReserve && setSelectedDeckTier(tier)}
                 style={{
                   width: '95px',
-                  height: '140px',
+                  height: '145px',
                   background: tierColors.bg,
                   border: `2px solid ${tierColors.border}`,
                   borderRadius: '8px',
@@ -176,7 +180,7 @@ export default function CardTable() {
                       className={`splendor-card ${affordable ? 'affordable' : ''}`}
                       onClick={() => setSelectedCard({ ...card, tier })}
                       style={{
-                        height: '140px',
+                        height: '145px',
                         width: '105px',
                         borderTop: `4px solid ${bonusMeta.borderColor}`,
                       }}
@@ -195,8 +199,16 @@ export default function CardTable() {
                         </span>
                       </div>
 
-                      {/* Biaya Kartu (Cost) di Bagian Bawah */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: 'auto' }}>
+                      {/* Biaya Kartu (Cost) Menurun di Kiri Bawah Sesuai Desain Asli Splendor */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '3px',
+                          marginTop: 'auto',
+                          alignItems: 'flex-start',
+                        }}
+                      >
                         {card.cost &&
                           Object.entries(card.cost).map(([cKey, costAmount]) => {
                             if (costAmount <= 0) return null;
@@ -209,16 +221,17 @@ export default function CardTable() {
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  width: '20px',
-                                  height: '20px',
+                                  width: '21px',
+                                  height: '21px',
                                   borderRadius: '50%',
                                   background: meta?.bgColor || '#334155',
-                                  border: `1px solid ${meta?.borderColor || '#64748b'}`,
+                                  border: `1.5px solid ${meta?.borderColor || '#64748b'}`,
                                   color: meta?.textColor || '#fff',
-                                  fontSize: '0.7rem',
+                                  fontSize: '0.72rem',
                                   fontWeight: 800,
+                                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
                                 }}
-                                title={`${costAmount} ${meta?.indonesian || cKey}`}
+                                title={`Biaya: ${costAmount} permata ${meta?.indonesian || cKey}`}
                               >
                                 {costAmount}
                               </div>
@@ -234,7 +247,7 @@ export default function CardTable() {
                   <div
                     key={`empty-card-${emptyIdx}`}
                     style={{
-                      height: '140px',
+                      height: '145px',
                       width: '105px',
                       border: '1px dashed rgba(255, 255, 255, 0.1)',
                       borderRadius: '10px',
