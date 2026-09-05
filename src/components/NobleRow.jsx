@@ -54,13 +54,13 @@ export default function NobleRow() {
                         justifyContent: 'center',
                         width: '24px',
                         height: '24px',
-                        background: meta?.bgColor || '#334155',
-                        border: `1.5px solid ${meta?.borderColor || '#475569'}`,
+                        background: meta?.solidBg || '#334155',
+                        border: `1.5px solid ${meta?.solidBorder || meta?.borderColor || '#475569'}`,
                         borderRadius: '4px',
                         fontSize: '0.85rem',
                         fontWeight: 800,
-                        color: meta?.textColor || '#fff',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                        color: meta?.solidText || '#fff',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.65)',
                       }}
                       title={`Syarat: ${reqCount} kartu bonus ${meta?.indonesian || color}`}
                     >

@@ -7,7 +7,7 @@ import { normalizeColor } from '../utils/gemUtils';
  * 1. Gambar custom dari /assets/gems/{color}.png atau .svg (jika ada file di folder public)
  * 2. Vector SVG berpotongan facet permata asli (Brilliant Diamond, Sapphire, Emerald, Ruby, Onyx, Gold)
  */
-export default function GemIcon({ color = 'white', size = 16, style = {}, className = '', useImageFirst = true }) {
+export default function GemIcon({ color = 'white', size = 16, style = {}, className = '', useImageFirst = false }) {
   const [imageError, setImageError] = useState(false);
   const normalized = normalizeColor(color);
 

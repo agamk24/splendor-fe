@@ -229,22 +229,23 @@ export default function CardTable() {
                               <div
                                 key={cKey}
                                 style={{
-                                  display: 'flex',
+                                  display: 'inline-flex',
                                   alignItems: 'center',
-                                  justifyContent: 'center',
-                                  width: '21px',
-                                  height: '21px',
-                                  borderRadius: '50%',
-                                  background: meta?.bgColor || '#334155',
-                                  border: `1.5px solid ${meta?.borderColor || '#64748b'}`,
-                                  color: meta?.textColor || '#fff',
-                                  fontSize: '0.72rem',
+                                  gap: '3px',
+                                  padding: '1px 5px 1px 3px',
+                                  borderRadius: '6px',
+                                  background: meta?.solidBg || '#1e293b',
+                                  border: `1.5px solid ${meta?.solidBorder || meta?.borderColor || '#64748b'}`,
+                                  color: meta?.solidText || '#ffffff',
+                                  fontSize: '0.78rem',
                                   fontWeight: 800,
-                                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
+                                  lineHeight: 1,
+                                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.65)',
                                 }}
                                 title={`Biaya: ${costAmount} permata ${meta?.indonesian || cKey}`}
                               >
-                                {costAmount}
+                                <GemIcon color={c} size={13} />
+                                <span>{costAmount}</span>
                               </div>
                             );
                           })}
@@ -329,19 +330,21 @@ export default function CardTable() {
                             <span
                               key={cKey}
                               style={{
-                                padding: '0.2rem 0.5rem',
-                                background: meta?.bgColor,
-                                border: `1px solid ${meta?.borderColor}`,
+                                padding: '3px 8px 3px 6px',
+                                background: meta?.solidBg || '#1e293b',
+                                border: `1.5px solid ${meta?.solidBorder || meta?.borderColor || '#64748b'}`,
                                 borderRadius: '6px',
-                                color: meta?.textColor,
+                                color: meta?.solidText || '#ffffff',
                                 fontSize: '0.85rem',
-                                fontWeight: 700,
+                                fontWeight: 800,
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '4px',
+                                gap: '5px',
+                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
                               }}
+                              title={`Biaya: ${costAmount} permata ${meta?.indonesian || cKey}`}
                             >
-                              <GemIcon color={c} size={15} /> {costAmount}
+                              <GemIcon color={c} size={16} /> {costAmount}
                             </span>
                           );
                         })}

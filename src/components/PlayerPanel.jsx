@@ -405,19 +405,21 @@ export default function PlayerPanel({ player, index }) {
                             <span
                               key={cKey}
                               style={{
-                                padding: '1px 5px',
-                                background: meta?.bgColor,
-                                border: `1px solid ${meta?.borderColor}`,
+                                padding: '2px 6px 2px 5px',
+                                background: meta?.solidBg || '#1e293b',
+                                border: `1.5px solid ${meta?.solidBorder || meta?.borderColor || '#64748b'}`,
                                 borderRadius: '4px',
-                                color: meta?.textColor,
-                                fontSize: '0.75rem',
-                                fontWeight: 700,
+                                color: meta?.solidText || '#ffffff',
+                                fontSize: '0.78rem',
+                                fontWeight: 800,
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '3px',
+                                gap: '4px',
+                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
                               }}
+                              title={`Biaya: ${amount} permata ${meta?.indonesian || cKey}`}
                             >
-                              <GemIcon color={c} size={13} /> {amount}
+                              <GemIcon color={c} size={14} /> {amount}
                             </span>
                           );
                         })}
