@@ -6,7 +6,7 @@ import GemIcon from './GemIcon';
 export default function GameActionLog() {
   const gameState = useGameStore((state) => state.gameState);
   const checkIsMe = useGameStore((state) => state.isMe);
-  const actionLog = useGameStore((state) => state.gameState?.log || state.actionLog || []);
+  const actionLog = useGameStore((state) => (Array.isArray(state.gameState?.log) && state.gameState.log.length > 0 ? state.gameState.log : state.actionLog || []));
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const logContainerRef = useRef(null);
@@ -40,9 +40,9 @@ export default function GameActionLog() {
       case 'take_three_different': {
         const colors = entry.colors || [];
         return (
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
-            <span>mengambil {colors.length} token:</span>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
+            <span>ambil {colors.length} token:</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
               {colors.map((c, i) => {
                 const norm = normalizeColor(c);
                 const meta = GEM_METADATA[norm] || {};
@@ -53,16 +53,16 @@ export default function GameActionLog() {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '2px',
-                      padding: '1px 5px',
-                      borderRadius: '4px',
+                      padding: '1px 4px',
+                      borderRadius: '3px',
                       background: meta.bgColor || 'rgba(255,255,255,0.1)',
                       border: `1px solid ${meta.borderColor || 'rgba(255,255,255,0.2)'}`,
-                      fontSize: '0.75rem',
+                      fontSize: '0.72rem',
                       color: meta.textColor || '#fff',
                     }}
                     title={meta.indonesian || norm}
                   >
-                    <GemIcon color={norm} size={13} />
+                    <GemIcon color={norm} size={12} />
                   </span>
                 );
               })}
@@ -75,23 +75,23 @@ export default function GameActionLog() {
         const norm = normalizeColor(entry.color);
         const meta = GEM_METADATA[norm] || {};
         return (
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
-            <span>mengambil 2x token</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
+            <span>ambil 2x token</span>
             <span
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '3px',
-                padding: '1px 6px',
-                borderRadius: '4px',
+                gap: '2px',
+                padding: '1px 5px',
+                borderRadius: '3px',
                 background: meta.bgColor || 'rgba(255,255,255,0.1)',
                 border: `1px solid ${meta.borderColor || 'rgba(255,255,255,0.2)'}`,
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 color: meta.textColor || '#fff',
               }}
               title={meta.indonesian || norm}
             >
-              <GemIcon color={norm} size={13} />
+              <GemIcon color={norm} size={12} />
               <strong>2x</strong>
             </span>
           </div>
@@ -104,25 +104,25 @@ export default function GameActionLog() {
         const meta = GEM_METADATA[bonusColor] || {};
         const points = card.points ?? 0;
         return (
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
-            <span>membeli kartu Tier {card.tier || '1'}</span>
-            {entry.fromReserved && <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontStyle: 'italic' }}>(dari reservasi)</span>}
+          <div style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
+            <span>beli kartu Tier {card.tier || '1'}</span>
+            {entry.fromReserved && <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontStyle: 'italic' }}>(reservasi)</span>}
             {bonusColor && (
               <span
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '2px',
-                  padding: '1px 5px',
+                  padding: '1px 4px',
                   borderRadius: '3px',
                   background: meta.bgColor || 'rgba(255,255,255,0.1)',
                   border: `1px solid ${meta.borderColor || 'rgba(255,255,255,0.2)'}`,
-                  fontSize: '0.75rem',
+                  fontSize: '0.72rem',
                   color: meta.textColor || '#fff',
                 }}
                 title={`Bonus ${meta.indonesian || bonusColor}`}
               >
-                <GemIcon color={bonusColor} size={13} />
+                <GemIcon color={bonusColor} size={12} />
                 <span>+1</span>
               </span>
             )}
@@ -136,7 +136,7 @@ export default function GameActionLog() {
                   borderRadius: '3px',
                   background: 'rgba(245, 158, 11, 0.2)',
                   border: '1px solid #f59e0b',
-                  fontSize: '0.75rem',
+                  fontSize: '0.72rem',
                   color: '#fbbf24',
                   fontWeight: 700,
                 }}
@@ -152,9 +152,9 @@ export default function GameActionLog() {
         const card = entry.card || {};
         const tier = card.tier || entry.tier || 1;
         return (
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
             <span>
-              mereservasi kartu Tier {tier} {entry.fromDeck ? 'tertutup' : 'dari meja'}
+              reservasi Tier {tier} {entry.fromDeck ? 'tertutup' : 'meja'}
             </span>
             {entry.tookGold && (
               <span
@@ -162,11 +162,11 @@ export default function GameActionLog() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '2px',
-                  padding: '1px 5px',
+                  padding: '1px 4px',
                   borderRadius: '3px',
                   background: 'rgba(251, 191, 36, 0.2)',
                   border: '1px solid #fbbf24',
-                  fontSize: '0.75rem',
+                  fontSize: '0.7rem',
                   color: '#fde047',
                   fontWeight: 700,
                 }}
@@ -182,9 +182,9 @@ export default function GameActionLog() {
       case 'discard_tokens': {
         const tokens = entry.tokens || {};
         return (
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
-            <span>mengembalikan token:</span>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
+            <span>kembalikan token:</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
               {Object.entries(tokens).map(([col, amt]) => {
                 if (!amt) return null;
                 const norm = normalizeColor(col);
@@ -196,15 +196,15 @@ export default function GameActionLog() {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '2px',
-                      padding: '1px 4px',
+                      padding: '1px 3px',
                       borderRadius: '3px',
                       background: 'rgba(239, 68, 68, 0.2)',
                       border: '1px solid #ef4444',
-                      fontSize: '0.72rem',
+                      fontSize: '0.7rem',
                       color: '#fca5a5',
                     }}
                   >
-                    <GemIcon color={norm} size={12} />
+                    <GemIcon color={norm} size={11} />
                     <span>-{amt}</span>
                   </span>
                 );
@@ -216,8 +216,8 @@ export default function GameActionLog() {
 
       case 'noble_visit': {
         return (
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
-            <span style={{ color: '#fbbf24', fontWeight: 700 }}>🏛️ Dikunjungi Bangsawan! (+3 Poin Prestise 👑)</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
+            <span style={{ color: '#fbbf24', fontWeight: 700 }}>🏛️ Dikunjungi Bangsawan! (+3 👑)</span>
           </div>
         );
       }
@@ -226,8 +226,8 @@ export default function GameActionLog() {
         const winner = getPlayer(entry.winnerId);
         const winnerName = winner ? winner.name : 'Pemain';
         return (
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
-            <span style={{ color: '#34d399', fontWeight: 800 }}>🏆 Permainan Selesai! Pemenang: {winnerName}</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
+            <span style={{ color: '#34d399', fontWeight: 800 }}>🏆 Menang: {winnerName}</span>
           </div>
         );
       }
@@ -306,11 +306,11 @@ export default function GameActionLog() {
           ref={logContainerRef}
           className="custom-scrollbar"
           style={{
-            maxHeight: '260px',
+            maxHeight: '100px',
             overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.4rem',
+            gap: '0.22rem',
             paddingRight: '4px',
           }}
         >
@@ -318,9 +318,9 @@ export default function GameActionLog() {
             <div
               style={{
                 textAlign: 'center',
-                padding: '1.25rem 0.5rem',
+                padding: '0.75rem 0.5rem',
                 color: '#64748b',
-                fontSize: '0.78rem',
+                fontSize: '0.76rem',
                 fontStyle: 'italic',
               }}
             >
@@ -337,48 +337,38 @@ export default function GameActionLog() {
                 <div
                   key={entry.id || idx}
                   style={{
-                    fontSize: '0.78rem',
-                    lineHeight: '1.35',
-                    padding: '0.4rem 0.5rem',
-                    borderRadius: '6px',
+                    fontSize: '0.74rem',
+                    lineHeight: '1.25',
+                    padding: '0.22rem 0.45rem',
+                    borderRadius: '4px',
                     background: isLast ? 'rgba(56, 189, 248, 0.08)' : idx % 2 === 0 ? 'rgba(30, 41, 59, 0.45)' : 'rgba(15, 23, 42, 0.3)',
                     border: isLast ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid rgba(255, 255, 255, 0.04)',
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.2rem',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.35rem',
+                    flexShrink: 0,
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  {/* Baris Atas Entry: Timestamp & Pemain */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.4rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      <span
-                        style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          color: isMe ? '#60a5fa' : '#fbbf24',
-                          background: isMe ? 'rgba(59, 130, 246, 0.2)' : 'rgba(245, 158, 11, 0.15)',
-                          padding: '0px 5px',
-                          borderRadius: '3px',
-                          border: `1px solid ${isMe ? 'rgba(59, 130, 246, 0.35)' : 'rgba(245, 158, 11, 0.3)'}`,
-                        }}
-                      >
-                        {playerName} {isMe && '(Anda)'}
-                      </span>
-                    </div>
-
-                    {entry.timestamp && <span style={{ fontSize: '0.66rem', color: '#64748b' }}>{formatTime(entry.timestamp)}</span>}
+                  {/* Bagian Kiri: Nama: aksinya apa.. */}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap', minWidth: 0, flex: 1 }}>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        color: isMe ? '#60a5fa' : '#fbbf24',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {playerName}
+                      {isMe ? ' (Anda)' : ''}:
+                    </span>
+                    <div style={{ color: '#cbd5e1', display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>{renderLogContent(entry)}</div>
                   </div>
 
-                  {/* Isi Aksi */}
-                  <div style={{ color: '#cbd5e1' }}>{renderLogContent(entry)}</div>
+                  {/* Bagian Kanan: Timestamp */}
+                  {entry.timestamp && <span style={{ fontSize: '0.64rem', color: '#64748b', flexShrink: 0, marginLeft: 'auto' }}>{formatTime(entry.timestamp)}</span>}
                 </div>
               );
             })

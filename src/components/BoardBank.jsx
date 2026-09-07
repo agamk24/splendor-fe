@@ -107,7 +107,7 @@ export default function BoardBank() {
   return (
     <div className="card" style={{ minWidth: '280px', padding: '1.25rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>🏦 Bank Permata</h3>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>🏦 Gem Bank</h3>
         <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{isMyTurn ? '🟢 Giliran Anda' : '⏳ Menunggu Giliran'}</span>
       </div>
 

@@ -279,8 +279,7 @@ body {
 /* Noble Tile */
 .noble-tile {
   width: 105px;
-  min-height: 116px;
-  height: auto;
+  height: 116px;
   background: linear-gradient(135deg, #1e293b, #0f172a);
   border: 2px solid #f59e0b;
   border-radius: 8px;
@@ -378,7 +377,7 @@ body {
 
 .game-layout {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: 420px minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
 }
@@ -405,9 +404,16 @@ body {
 /* Responsive Board Grid */
 .game-board-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 290px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 1.25rem;
   align-items: start;
+}
+
+.game-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
 }
 
 /* Custom Scrollbar for Card Table on Mobile */
@@ -489,5 +495,23 @@ body {
     top: 0.75rem;
     right: 0.75rem;
     width: calc(100% - 1.5rem);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

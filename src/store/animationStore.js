@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { sound } from '../utils/soundManager';
+import { normalizeColor } from '../utils/gemUtils';
 
 export const useAnimationStore = create((set, get) => ({
   // Antrean kartu yang sedang terbang dari meja ke arah panel pemain
@@ -38,9 +39,23 @@ export const useAnimationStore = create((set, get) => ({
       cardEl = (card.id ? document.getElementById(`table-card-${card.id}`) : null) || (tier && typeof slotIndex !== 'undefined' ? document.getElementById(`table-slot-${tier}-${slotIndex}`) : null);
     }
 
-    // 2. Cari koordinat panel pemain tujuan (dukung ID, nama, atau index secara berlapis)
+    // 2. Cari koordinat panel pemain / kolom tumpukan kartu bonus tujuan
     let playerEl = null;
-    if (buyerPlayerId) {
+    const cardBonus = card?.bonus || card?.gem || card?.color;
+    if (cardBonus) {
+      const bColor = normalizeColor(cardBonus);
+      if (buyerPlayerId) {
+        playerEl = document.getElementById(`player-bonus-${buyerPlayerId}-${bColor}`);
+      }
+      if (!playerEl && buyerPlayerName) {
+        playerEl = document.getElementById(`player-bonus-${buyerPlayerName}-${bColor}`);
+      }
+      if (!playerEl && typeof buyerPlayerIndex === 'number') {
+        playerEl = document.querySelector(`[data-player-index="${buyerPlayerIndex}"] [data-player-bonus="${bColor}"]`);
+      }
+    }
+
+    if (!playerEl && buyerPlayerId) {
       playerEl = document.getElementById(`player-panel-${buyerPlayerId}`) || document.querySelector(`[data-player-panel="true"][data-player-id="${buyerPlayerId}"]`) || document.querySelector(`[data-player-id="${buyerPlayerId}"]`);
     }
     if (!playerEl && buyerPlayerName) {

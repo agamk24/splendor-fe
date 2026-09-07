@@ -12,6 +12,7 @@ import ToastAlert from '../components/ToastAlert';
 import CardFlyOverlay from '../components/CardFlyOverlay';
 import TokenFlyOverlay from '../components/TokenFlyOverlay';
 import GameActionLog from '../components/GameActionLog';
+import RoomSidebar from '../components/RoomSidebar';
 import { ALL_GEMS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 import { sound } from '../utils/soundManager';
 import GemIcon from '../components/GemIcon';
@@ -35,6 +36,7 @@ export default function Room() {
   // Local state
   const [inputName, setInputName] = useState('');
   const [joinError, setJoinError] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(sound.isMuted());
   const [discardSelection, setDiscardSelection] = useState({
     white: 0,
@@ -149,7 +151,7 @@ export default function Room() {
   const currentStatus = gameState?.status || 'waiting';
 
   return (
-    <div className="container room-container" style={{ paddingTop: '1rem', paddingBottom: '2.5rem' }}>
+    <div className="container room-container" style={{ paddingTop: '2rem', paddingBottom: '2.5rem' }}>
       {/* Toast Alert Auto-Hide untuk Error Action */}
       <ToastAlert />
 
@@ -157,48 +159,20 @@ export default function Room() {
       <CardFlyOverlay />
       <TokenFlyOverlay />
 
-      {/* Top Bar Room Info */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1rem',
-          paddingBottom: '0.75rem',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+      {/* Sidebar Navigasi & Pengaturan Room (Default: Tercollapse untuk Layar Full Game) */}
+      <RoomSidebar
+        isOpen={isSidebarOpen}
+        onToggle={setIsSidebarOpen}
+        roomId={urlRoomId}
+        isConnected={isConnected}
+        isMuted={isMuted}
+        onToggleMute={() => {
+          sound.toggleMute();
+          setIsMuted(sound.isMuted());
         }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '1.5rem' }}>💎</span>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Splendor Online</span>
-            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f8fafc' }}>
-              Room: <span style={{ color: '#38bdf8' }}>{urlRoomId}</span>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button
-            onClick={() => {
-              sound.toggleMute();
-              setIsMuted(sound.isMuted());
-            }}
-            className="btn btn-secondary"
-            style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
-            title={isMuted ? 'Suara Dinonaktifkan (Klik untuk aktifkan)' : 'Suara Aktif (Klik untuk matikan)'}
-          >
-            {isMuted ? '🔇' : '🔊'}
-          </button>
-          <span className={`badge ${isConnected ? 'badge-connected' : 'badge-disconnected'}`}>
-            <span className="badge-dot" />
-            {isConnected ? 'Online' : 'Offline'}
-          </span>
-          <button onClick={handleLeaveRoom} className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}>
-            Keluar
-          </button>
-        </div>
-      </div>
+        onLeaveRoom={handleLeaveRoom}
+        currentStatus={currentStatus}
+      />
 
       {/* Render Kondisional Sesuai gameState.status */}
       {currentStatus === 'waiting' && <Lobby roomId={urlRoomId} />}
@@ -295,15 +269,17 @@ export default function Room() {
               <GameActionLog />
             </aside>
 
-            {/* Kolom Kanan: Papan Permainan (Bangsawan, Kartu Meja, & Bank Permata) */}
+            {/* Kolom Kanan: Papan Permainan (Kartu Meja di kiri, Bangsawan & Bank Permata di kanan) */}
             <main className="game-table-column">
-              {/* Noble Row di bagian atas papan */}
-              <NobleRow />
-
-              {/* Area Meja Utama: Card Table & Token Bank */}
               <div className="game-board-grid">
+                {/* Kolom Kiri: Kartu Meja (Dinaikkan ke posisi atas) */}
                 <CardTable />
-                <BoardBank />
+
+                {/* Kolom Kanan: Card Noble & Bank Permata */}
+                <div className="game-right-column">
+                  <NobleRow />
+                  <BoardBank />
+                </div>
               </div>
             </main>
           </div>

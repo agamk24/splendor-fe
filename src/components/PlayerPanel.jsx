@@ -44,11 +44,13 @@ export default function PlayerPanel({ player, index }) {
   });
   const totalTokens = ALL_GEMS.reduce((sum, c) => sum + (tokens[c] || 0), 0);
 
-  // Bonus kartu per warna, dihitung dari cardsOwned (nama field resmi backend).
+  // Bonus kartu per warna & daftar kartu terbeli per warna
   const bonuses = { white: 0, blue: 0, green: 0, red: 0, black: 0 };
+  const cardsByColor = { white: [], blue: [], green: [], red: [], black: [] };
   (player.cardsOwned || []).forEach((c) => {
-    const bColor = normalizeColor(c.bonus);
+    const bColor = normalizeColor(c.bonus || c.gem || c.color);
     if (bonuses[bColor] !== undefined) bonuses[bColor]++;
+    if (cardsByColor[bColor]) cardsByColor[bColor].push(c);
   });
 
   // Kartu reservasi
@@ -90,7 +92,7 @@ export default function PlayerPanel({ player, index }) {
       data-player-index={index}
       className={`card ${isCurrentTurn ? 'player-active' : ''}`}
       style={{
-        padding: '0.6rem 0.75rem',
+        padding: '0.6rem 0.65rem',
         border: isRecentBuyer || isRecentTokenBuyer ? '2px solid #34d399' : isCurrentTurn ? '2px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.1)',
         background: isRecentBuyer
           ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(30, 41, 59, 0.95))'
@@ -213,56 +215,7 @@ export default function PlayerPanel({ player, index }) {
         </div>
       </div>
 
-      {/* Baris 2: Bonus Kartu Dimiliki (Diskon) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-        <span
-          style={{
-            fontSize: '0.68rem',
-            color: '#94a3b8',
-            width: '45px',
-            flexShrink: 0,
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '2px',
-          }}
-          title="Bonus diskon permanen dari kartu yang sudah dibeli"
-        >
-          <span>🃏</span> Bonus
-        </span>
-        <div style={{ display: 'flex', gap: '0.25rem', flex: 1, justifyContent: 'space-between' }}>
-          {GEM_COLORS.map((color) => {
-            const meta = GEM_METADATA[color];
-            const count = bonuses[color] || 0;
-            return (
-              <div
-                key={color}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '2px',
-                  padding: '1px 3px',
-                  borderRadius: '3px',
-                  background: count > 0 ? meta.bgColor : 'rgba(15, 23, 42, 0.45)',
-                  border: `1px solid ${count > 0 ? meta.borderColor : 'rgba(255, 255, 255, 0.05)'}`,
-                  color: count > 0 ? meta.textColor : '#64748b',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  flex: 1,
-                  minWidth: 0,
-                }}
-                title={`${meta.indonesian}: ${count} bonus kartu`}
-              >
-                <GemIcon color={color} size={12} />
-                <span>{count}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Baris 3: Token Permata Dimiliki */}
+      {/* Baris 2: Token Permata Dimiliki (Ditukar ke atas) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
         <span
           style={{
@@ -314,6 +267,186 @@ export default function PlayerPanel({ player, index }) {
             );
           })}
         </div>
+      </div>
+
+      {/* Baris 3: Tumpukan 5 Kolom Kartu Dimiliki (Muat 5 Kolom Sejajar) */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '5px',
+          padding: '2px 0 4px',
+          alignItems: 'flex-start',
+          marginTop: '0.2rem',
+        }}
+      >
+        {GEM_COLORS.map((color) => {
+          const meta = GEM_METADATA[color];
+          const cards = cardsByColor[color] || [];
+          const count = cards.length;
+
+          // Ukuran kartu proporsional (72px x 100px) agar 5 kolom muat sejajar dalam panel
+          const cardWidth = 72;
+          const cardHeight = 100;
+          // Langkah tumpukan vertikal (cascade)
+          const stackStep = count <= 3 ? 24 : Math.max(12, Math.floor(60 / (count - 1)));
+          const containerHeight = count > 0 ? cardHeight + (count - 1) * stackStep : cardHeight;
+
+          return (
+            <div
+              key={color}
+              id={`player-bonus-${player.id || player.playerId || player.name}-${color}`}
+              data-player-bonus={color}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                flexShrink: 0,
+                width: `${cardWidth}px`,
+              }}
+            >
+              {/* Tumpukan Kartu Bertingkat Proporsional (72px x 100px) */}
+              <div
+                style={{
+                  position: 'relative',
+                  width: `${cardWidth}px`,
+                  height: `${containerHeight}px`,
+                  transition: 'height 0.25s ease',
+                }}
+              >
+                {count === 0 ? (
+                  /* Placeholder Slot Kosong */
+                  <div
+                    style={{
+                      width: `${cardWidth}px`,
+                      height: `${cardHeight}px`,
+                      borderRadius: '8px',
+                      border: '1.5px dashed rgba(255, 255, 255, 0.12)',
+                      background: 'rgba(15, 23, 42, 0.25)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      opacity: 0.45,
+                    }}
+                  >
+                    <GemIcon color={color} size={20} />
+                    <span style={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: 600 }}>0</span>
+                  </div>
+                ) : (
+                  /* Kartu-kartu yang Ditumpuk dengan Artwork & Ukuran Rapi */
+                  cards.map((card, cIdx) => {
+                    const topOffset = cIdx * stackStep;
+                    const isTopCard = cIdx === cards.length - 1;
+                    const cardPts = card.points ?? card.prestige ?? 0;
+
+                    return (
+                      <div
+                        key={card.id || `${color}-${cIdx}`}
+                        className="splendor-card"
+                        title={`Kartu Tier ${card.tier || 1} • Bonus ${meta.indonesian} • ${cardPts > 0 ? `${cardPts} Poin Prestise` : '0 Poin'}`}
+                        style={{
+                          position: 'absolute',
+                          top: `${topOffset}px`,
+                          left: 0,
+                          width: `${cardWidth}px`,
+                          height: `${cardHeight}px`,
+                          borderRadius: '8px',
+                          borderTop: `3px solid ${meta.borderColor}`,
+                          border: `1.5px solid ${meta.borderColor}`,
+                          boxShadow: isTopCard ? '0 6px 14px rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 0, 0, 0.3)' : '0 2px 6px rgba(0, 0, 0, 0.5)',
+                          zIndex: cIdx + 1,
+                          overflow: 'hidden',
+                          cursor: 'default',
+                          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                          padding: '0.35rem 0.35rem',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.04)';
+                          e.currentTarget.style.zIndex = '99';
+                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 255, 255, 0.2)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'none';
+                          e.currentTarget.style.zIndex = String(cIdx + 1);
+                          e.currentTarget.style.boxShadow = isTopCard ? '0 6px 14px rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 0, 0, 0.3)' : '0 2px 6px rgba(0, 0, 0, 0.5)';
+                        }}
+                      >
+                        {/* Ilustrasi Artwork Kartu */}
+                        <CardIllustration card={card} />
+
+                        {/* Header Kartu: Poin & Bonus Permata (Selalu Tampak pada Tiap Tingkatan Stack) */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            position: 'relative',
+                            zIndex: 2,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: '0.88rem',
+                              fontWeight: 800,
+                              color: '#f8fafc',
+                              textShadow: '0 2px 4px rgba(0,0,0,0.9)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '1px',
+                            }}
+                          >
+                            {cardPts > 0 ? (
+                              <>
+                                {cardPts} <span style={{ fontSize: '0.6rem' }}>👑</span>
+                              </>
+                            ) : (
+                              ''
+                            )}
+                          </span>
+
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              filter: `drop-shadow(0 0 4px ${meta.glowColor || 'rgba(0,0,0,0.5)'})`,
+                            }}
+                            title={`Bonus: ${meta.indonesian}`}
+                          >
+                            <GemIcon color={color} size={16} />
+                          </span>
+                        </div>
+
+                        {/* Bagian Bawah Kartu (Terlihat pada kartu terdepan): Badge Tier */}
+                        {isTopCard && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: '4px',
+                              right: '4px',
+                              zIndex: 2,
+                              fontSize: '0.56rem',
+                              fontWeight: 800,
+                              color: 'rgba(255, 255, 255, 0.85)',
+                              background: 'rgba(15, 23, 42, 0.8)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              padding: '0px 4px',
+                              borderRadius: '3px',
+                              letterSpacing: '0.2px',
+                            }}
+                          >
+                            Tier {card.tier || 1}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Baris 4: Kartu Reservasi (Hanya ditampilkan jika ada kartu yang direservasi) */}
@@ -435,21 +568,22 @@ export default function PlayerPanel({ player, index }) {
                             <span
                               key={cKey}
                               style={{
-                                padding: '2px 6px 2px 5px',
+                                width: '26px',
+                                height: '26px',
+                                borderRadius: '50%',
                                 background: meta?.solidBg || '#1e293b',
                                 border: `1.5px solid ${meta?.solidBorder || meta?.borderColor || '#64748b'}`,
-                                borderRadius: '4px',
                                 color: meta?.solidText || '#ffffff',
-                                fontSize: '0.78rem',
-                                fontWeight: 800,
+                                fontSize: '0.85rem',
+                                fontWeight: 900,
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '4px',
+                                justifyContent: 'center',
                                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
                               }}
                               title={`Biaya: ${amount} permata ${meta?.indonesian || cKey}`}
                             >
-                              <GemIcon color={c} size={14} /> {amount}
+                              {amount}
                             </span>
                           );
                         })}

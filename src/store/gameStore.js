@@ -339,25 +339,38 @@ export const useGameStore = create((set, get) => ({
               }
 
               // 3. KASUS PENGAMBILAN TOKEN (tokens bertambah)
-              if (prevGameState.status === 'playing') {
-                const normalizeTokenMap = (tokMap) => {
-                  const res = { white: 0, blue: 0, green: 0, red: 0, black: 0, gold: 0 };
-                  if (!tokMap) return res;
-                  Object.entries(tokMap).forEach(([k, val]) => {
-                    const norm = normalizeColor(k);
-                    if (res[norm] !== undefined) {
-                      res[norm] = Math.max(res[norm], Number(val) || 0);
-                    }
-                  });
-                  return res;
-                };
+              const normalizeTokenMap = (tokMap) => {
+                const res = { white: 0, blue: 0, green: 0, red: 0, black: 0, gold: 0 };
+                if (!tokMap) return res;
+                Object.entries(tokMap).forEach(([k, val]) => {
+                  const norm = normalizeColor(k);
+                  if (res[norm] !== undefined) {
+                    res[norm] = Math.max(res[norm], Number(val) || 0);
+                  }
+                });
+                return res;
+              };
 
-                const prevTok = normalizeTokenMap(prevPlayer.tokens);
-                const newTok = normalizeTokenMap(newPlayer.tokens);
+              const prevTok = normalizeTokenMap(prevPlayer.tokens);
+              const newTok = normalizeTokenMap(newPlayer.tokens);
 
-                const gainedTokens = [];
-                ['white', 'blue', 'green', 'red', 'black', 'gold'].forEach((col) => {
-                  const diff = (newTok[col] || 0) - (prevTok[col] || 0);
+              const gainedTokens = [];
+              ['white', 'blue', 'green', 'red', 'black', 'gold'].forEach((col) => {
+                const diff = (newTok[col] || 0) - (prevTok[col] || 0);
+                if (diff > 0) {
+                  const count = Math.min(diff, 3);
+                  for (let i = 0; i < count; i++) {
+                    gainedTokens.push(col);
+                  }
+                }
+              });
+
+              // Fallback deteksi dari pengurangan bank jika pemain tidak membeli/mereservasi kartu
+              if (gainedTokens.length === 0 && newCards.length === prevCards.length && newReserved.length === prevReserved.length && prevGameState.currentPlayerIndex === pIdx && prevGameState.bank && newGameState.bank) {
+                const prevBank = normalizeTokenMap(prevGameState.bank);
+                const newBank = normalizeTokenMap(newGameState.bank);
+                ['white', 'blue', 'green', 'red', 'black'].forEach((col) => {
+                  const diff = (prevBank[col] || 0) - (newBank[col] || 0);
                   if (diff > 0) {
                     const count = Math.min(diff, 3);
                     for (let i = 0; i < count; i++) {
@@ -365,37 +378,37 @@ export const useGameStore = create((set, get) => ({
                     }
                   }
                 });
+              }
 
-                if (gainedTokens.length > 0) {
-                  console.log(`[AnimationTrigger] Token gain detected for player ${buyerPlayerName} (index ${buyerPlayerIndex}):`, gainedTokens);
-                  useAnimationStore.getState().triggerTokenGain({
-                    playerId: buyerPlayerId,
-                    playerIndex: buyerPlayerIndex,
-                    playerName: buyerPlayerName,
-                    tokens: gainedTokens,
-                  });
+              if (gainedTokens.length > 0) {
+                console.log(`[AnimationTrigger] Token gain detected for player ${buyerPlayerName} (index ${buyerPlayerIndex}):`, gainedTokens);
+                useAnimationStore.getState().triggerTokenGain({
+                  playerId: buyerPlayerId,
+                  playerIndex: buyerPlayerIndex,
+                  playerName: buyerPlayerName,
+                  tokens: gainedTokens,
+                });
 
-                  // Catat ke format LogEntry sesuai API.md (hanya jika bukan sekadar emas dari reservasi)
-                  const isJustReserveGold = gainedTokens.length === 1 && gainedTokens[0] === 'gold' && newReserved.length > prevReserved.length;
-                  if (!isJustReserveGold) {
-                    if (gainedTokens.length === 2 && gainedTokens[0] === gainedTokens[1]) {
-                      synthesizedLogs.push({
-                        id: `log-two-${Date.now()}-${buyerPlayerId}-${Math.random().toString(36).slice(2, 6)}`,
-                        timestamp: Date.now(),
-                        type: 'take_two_same',
-                        playerId: buyerPlayerId,
-                        color: toServerColor(gainedTokens[0]),
-                        count: 2,
-                      });
-                    } else {
-                      synthesizedLogs.push({
-                        id: `log-three-${Date.now()}-${buyerPlayerId}-${Math.random().toString(36).slice(2, 6)}`,
-                        timestamp: Date.now(),
-                        type: 'take_three_different',
-                        playerId: buyerPlayerId,
-                        colors: gainedTokens.map(toServerColor),
-                      });
-                    }
+                // Catat ke format LogEntry sesuai API.md (hanya jika bukan sekadar emas dari reservasi)
+                const isJustReserveGold = gainedTokens.length === 1 && gainedTokens[0] === 'gold' && newReserved.length > prevReserved.length;
+                if (!isJustReserveGold) {
+                  if (gainedTokens.length === 2 && gainedTokens[0] === gainedTokens[1]) {
+                    synthesizedLogs.push({
+                      id: `log-two-${Date.now()}-${buyerPlayerId}-${Math.random().toString(36).slice(2, 6)}`,
+                      timestamp: Date.now(),
+                      type: 'take_two_same',
+                      playerId: buyerPlayerId,
+                      color: toServerColor(gainedTokens[0]),
+                      count: 2,
+                    });
+                  } else {
+                    synthesizedLogs.push({
+                      id: `log-three-${Date.now()}-${buyerPlayerId}-${Math.random().toString(36).slice(2, 6)}`,
+                      timestamp: Date.now(),
+                      type: 'take_three_different',
+                      playerId: buyerPlayerId,
+                      colors: gainedTokens.map(toServerColor),
+                    });
                   }
                 }
               }

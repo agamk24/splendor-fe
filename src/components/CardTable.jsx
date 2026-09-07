@@ -106,7 +106,7 @@ export default function CardTable() {
   return (
     <div className="card" style={{ flex: 1, padding: '1.25rem', overflowX: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>🃏 Kartu Perkembangan (Table Cards)</h3>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>🃏 Table Cards</h3>
         <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Klik kartu untuk opsi Beli / Reservasi</span>
       </div>
 
@@ -211,48 +211,71 @@ export default function CardTable() {
                           </span>
                         </div>
 
-                        {/* Biaya Kartu (Cost) Menurun di Kiri Bawah Sesuai Desain Asli Splendor */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '3px',
-                            marginTop: 'auto',
-                            alignItems: 'flex-start',
-                            position: 'relative',
-                            zIndex: 2,
-                          }}
-                        >
-                          {card.cost &&
-                            Object.entries(card.cost).map(([cKey, costAmount]) => {
-                              if (costAmount <= 0) return null;
-                              const c = normalizeColor(cKey);
-                              const meta = GEM_METADATA[c];
-                              return (
-                                <div
-                                  key={cKey}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '3px',
-                                    padding: '1px 5px',
-                                    borderRadius: '10px',
-                                    background: meta?.bgColor || '#334155',
-                                    border: `1px solid ${meta?.borderColor || '#64748b'}`,
-                                    color: meta?.textColor || '#fff',
-                                    fontSize: '0.78rem',
-                                    fontWeight: 800,
-                                    lineHeight: 1,
-                                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.65)',
-                                  }}
-                                  title={`Biaya: ${costAmount} permata ${meta?.indonesian || cKey}`}
-                                >
-                                  <GemIcon color={c} size={13} />
-                                  <span>{costAmount}</span>
-                                </div>
-                              );
-                            })}
-                        </div>
+                        {/* Biaya Kartu (Cost): Maksimal 2 Row (4 kombinasi = 2x2, 3 kombinasi = kolom 2 diisi row bawah) */}
+                        {(() => {
+                          const validCosts = Object.entries(card.cost || {}).filter(([_, costAmount]) => Number(costAmount) > 0);
+                          if (validCosts.length === 0) return null;
+
+                          return (
+                            <div
+                              style={{
+                                display: 'grid',
+                                gridTemplateRows: 'repeat(2, 26px)',
+                                gridTemplateColumns: validCosts.length > 2 ? 'repeat(2, 26px)' : '26px',
+                                gap: '4px',
+                                marginTop: 'auto',
+                                position: 'relative',
+                                zIndex: 2,
+                                width: 'fit-content',
+                              }}
+                            >
+                              {validCosts.map(([cKey, costAmount], cIdx) => {
+                                const c = normalizeColor(cKey);
+                                const meta = GEM_METADATA[c];
+
+                                // Penataan grid: 1 kombinasi nempel di bawah (row 2), 3 kombinasi kolom 2 diisi baris bawah
+                                let posStyle = {};
+                                if (validCosts.length === 1) {
+                                  posStyle = { gridRow: '2', gridColumn: '1' };
+                                } else if (validCosts.length === 3) {
+                                  if (cIdx === 0) posStyle = { gridRow: '1', gridColumn: '1' };
+                                  else if (cIdx === 1) posStyle = { gridRow: '2', gridColumn: '1' };
+                                  else if (cIdx === 2) posStyle = { gridRow: '2', gridColumn: '2' };
+                                } else {
+                                  const col = Math.floor(cIdx / 2) + 1;
+                                  const row = (cIdx % 2) + 1;
+                                  posStyle = { gridRow: String(row), gridColumn: String(col) };
+                                }
+
+                                return (
+                                  <div
+                                    key={cKey}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: '26px',
+                                      height: '26px',
+                                      borderRadius: '50%',
+                                      background: meta?.solidBg || '#334155',
+                                      border: `1.5px solid ${meta?.solidBorder || meta?.borderColor || '#64748b'}`,
+                                      color: meta?.solidText || '#fff',
+                                      fontSize: '1rem',
+                                      fontWeight: 900,
+                                      lineHeight: 1,
+                                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.65)',
+                                      flexShrink: 0,
+                                      ...posStyle,
+                                    }}
+                                    title={`Biaya: ${costAmount} permata ${meta?.indonesian || cKey}`}
+                                  >
+                                    {costAmount}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </CardFlipSlot>
                   );
@@ -334,21 +357,22 @@ export default function CardTable() {
                             <span
                               key={cKey}
                               style={{
-                                padding: '3px 8px 3px 6px',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
                                 background: meta?.solidBg || '#1e293b',
                                 border: `1.5px solid ${meta?.solidBorder || meta?.borderColor || '#64748b'}`,
-                                borderRadius: '6px',
                                 color: meta?.solidText || '#ffffff',
-                                fontSize: '0.85rem',
-                                fontWeight: 800,
+                                fontSize: '0.9rem',
+                                fontWeight: 900,
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '5px',
+                                justifyContent: 'center',
                                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
                               }}
                               title={`Biaya: ${costAmount} permata ${meta?.indonesian || cKey}`}
                             >
-                              <GemIcon color={c} size={16} /> {costAmount}
+                              {costAmount}
                             </span>
                           );
                         })}
