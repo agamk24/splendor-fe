@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { socket, emit } from '../socket/socketClient';
 import { translateError } from '../utils/errorMessages';
-import { toServerColor, toServerTokenMap } from '../utils/gemUtils';
+import { toServerColor, toServerTokenMap, normalizeColor } from '../utils/gemUtils';
 import { useAnimationStore } from './animationStore';
 
 let listenersInitialized = false;
@@ -226,122 +226,129 @@ export const useGameStore = create((set, get) => ({
           };
 
           for (let pIdx = 0; pIdx < newGameState.players.length; pIdx++) {
-            const newPlayer = newGameState.players[pIdx];
-            const prevPlayer = prevGameState.players.find((p) => (p.id && p.id === newPlayer.id) || (p.playerId && p.playerId === newPlayer.playerId) || p.name === newPlayer.name) || prevGameState.players[pIdx];
-            if (!prevPlayer) continue;
+            try {
+              const newPlayer = newGameState.players[pIdx];
+              const prevPlayer = prevGameState.players.find((p) => (p.id && p.id === newPlayer.id) || (p.playerId && p.playerId === newPlayer.playerId) || p.name === newPlayer.name) || prevGameState.players[pIdx];
+              if (!prevPlayer) continue;
 
-            const newCards = newPlayer.cardsOwned || newPlayer.cards || [];
-            const prevCards = prevPlayer.cardsOwned || prevPlayer.cards || [];
+              const newCards = newPlayer.cardsOwned || newPlayer.cards || [];
+              const prevCards = prevPlayer.cardsOwned || prevPlayer.cards || [];
 
-            const newReserved = newPlayer.reservedCards || newPlayer.reserved || [];
-            const prevReserved = prevPlayer.reservedCards || prevPlayer.reserved || [];
+              const newReserved = newPlayer.reservedCards || newPlayer.reserved || [];
+              const prevReserved = prevPlayer.reservedCards || prevPlayer.reserved || [];
 
-            const buyerPlayerId = newPlayer.id || newPlayer.playerId;
-            const buyerPlayerIndex = pIdx;
-            const buyerPlayerName = newPlayer.name;
+              const buyerPlayerId = newPlayer.id || newPlayer.playerId;
+              const buyerPlayerIndex = pIdx;
+              const buyerPlayerName = newPlayer.name;
 
-            // 1. KASUS BELI KARTU (cardsOwned bertambah)
-            if (newCards.length > prevCards.length) {
-              const prevIds = new Set(prevCards.map((c) => c.id));
-              const boughtCard = newCards.find((c) => !prevIds.has(c.id));
+              // 1. KASUS BELI KARTU (cardsOwned bertambah)
+              if (newCards.length > prevCards.length) {
+                const prevIds = new Set(prevCards.map((c) => c.id));
+                const boughtCard = newCards.find((c) => !prevIds.has(c.id));
 
-              if (boughtCard) {
-                const tier = boughtCard.tier || 1;
-                const prevTierCards = getTierCards(tier, prevGameState.tableCards);
-                const slotIndex = prevTierCards.findIndex((c) => c && c.id === boughtCard.id);
+                if (boughtCard) {
+                  console.log(`[AnimationTrigger] Card purchase detected for player ${buyerPlayerName} (index ${buyerPlayerIndex}):`, boughtCard.id);
+                  const tier = boughtCard.tier || 1;
+                  const prevTierCards = getTierCards(tier, prevGameState.tableCards);
+                  const slotIndex = prevTierCards.findIndex((c) => c && c.id === boughtCard.id);
 
-                let newCard = null;
-                if (slotIndex !== -1) {
-                  const nextTierCards = getTierCards(tier, newGameState.tableCards);
-                  const candidate = nextTierCards[slotIndex];
-                  if (candidate && candidate.id !== boughtCard.id) {
-                    newCard = candidate;
+                  let newCard = null;
+                  if (slotIndex !== -1) {
+                    const nextTierCards = getTierCards(tier, newGameState.tableCards);
+                    const candidate = nextTierCards[slotIndex];
+                    if (candidate && candidate.id !== boughtCard.id) {
+                      newCard = candidate;
+                    }
                   }
+
+                  useAnimationStore.getState().triggerCardPurchase({
+                    card: boughtCard,
+                    buyerPlayerId,
+                    buyerPlayerIndex,
+                    buyerPlayerName,
+                    tier: slotIndex !== -1 ? tier : undefined,
+                    slotIndex: slotIndex !== -1 ? slotIndex : undefined,
+                    newCard,
+                    actionType: 'buy',
+                  });
                 }
-
-                useAnimationStore.getState().triggerCardPurchase({
-                  card: boughtCard,
-                  buyerPlayerId,
-                  buyerPlayerIndex,
-                  buyerPlayerName,
-                  tier: slotIndex !== -1 ? tier : undefined,
-                  slotIndex: slotIndex !== -1 ? slotIndex : undefined,
-                  newCard,
-                  actionType: 'buy',
-                });
               }
-            }
 
-            // 2. KASUS RESERVASI KARTU (reservedCards bertambah)
-            if (newReserved.length > prevReserved.length) {
-              const prevResIds = new Set(prevReserved.map((c) => c.id));
-              const reservedCard = newReserved.find((c) => !prevResIds.has(c.id));
+              // 2. KASUS RESERVASI KARTU (reservedCards bertambah)
+              if (newReserved.length > prevReserved.length) {
+                const prevResIds = new Set(prevReserved.map((c) => c.id));
+                const reservedCard = newReserved.find((c) => !prevResIds.has(c.id));
 
-              if (reservedCard) {
-                const tier = reservedCard.tier || 1;
-                const prevTierCards = getTierCards(tier, prevGameState.tableCards);
-                const slotIndex = prevTierCards.findIndex((c) => c && c.id === reservedCard.id);
+                if (reservedCard) {
+                  console.log(`[AnimationTrigger] Card reserve detected for player ${buyerPlayerName} (index ${buyerPlayerIndex}):`, reservedCard.id);
+                  const tier = reservedCard.tier || 1;
+                  const prevTierCards = getTierCards(tier, prevGameState.tableCards);
+                  const slotIndex = prevTierCards.findIndex((c) => c && c.id === reservedCard.id);
 
-                let newCard = null;
-                // Jika direservasi dari meja (bukan blind reserve langsung dari deck)
-                if (slotIndex !== -1) {
-                  const nextTierCards = getTierCards(tier, newGameState.tableCards);
-                  const candidate = nextTierCards[slotIndex];
-                  if (candidate && candidate.id !== reservedCard.id) {
-                    newCard = candidate;
+                  let newCard = null;
+                  // Jika direservasi dari meja (bukan blind reserve langsung dari deck)
+                  if (slotIndex !== -1) {
+                    const nextTierCards = getTierCards(tier, newGameState.tableCards);
+                    const candidate = nextTierCards[slotIndex];
+                    if (candidate && candidate.id !== reservedCard.id) {
+                      newCard = candidate;
+                    }
                   }
+
+                  useAnimationStore.getState().triggerCardPurchase({
+                    card: reservedCard,
+                    buyerPlayerId,
+                    buyerPlayerIndex,
+                    buyerPlayerName,
+                    tier: slotIndex !== -1 ? tier : reservedCard.tier,
+                    slotIndex: slotIndex !== -1 ? slotIndex : undefined,
+                    newCard,
+                    actionType: 'reserve',
+                    fromDeck: slotIndex === -1,
+                  });
                 }
-
-                useAnimationStore.getState().triggerCardPurchase({
-                  card: reservedCard,
-                  buyerPlayerId,
-                  buyerPlayerIndex,
-                  buyerPlayerName,
-                  tier: slotIndex !== -1 ? tier : reservedCard.tier,
-                  slotIndex: slotIndex !== -1 ? slotIndex : undefined,
-                  newCard,
-                  actionType: 'reserve',
-                  fromDeck: slotIndex === -1,
-                });
               }
-            }
 
-            // 3. KASUS PENGAMBILAN TOKEN (tokens bertambah)
-            if (prevGameState.status === 'playing') {
-              const normalizeTokenMap = (tokMap) => {
-                const res = { white: 0, blue: 0, green: 0, red: 0, black: 0, gold: 0 };
-                if (!tokMap) return res;
-                Object.entries(tokMap).forEach(([k, val]) => {
-                  const norm = normalizeColor(k);
-                  if (res[norm] !== undefined) {
-                    res[norm] = Math.max(res[norm], Number(val) || 0);
+              // 3. KASUS PENGAMBILAN TOKEN (tokens bertambah)
+              if (prevGameState.status === 'playing') {
+                const normalizeTokenMap = (tokMap) => {
+                  const res = { white: 0, blue: 0, green: 0, red: 0, black: 0, gold: 0 };
+                  if (!tokMap) return res;
+                  Object.entries(tokMap).forEach(([k, val]) => {
+                    const norm = normalizeColor(k);
+                    if (res[norm] !== undefined) {
+                      res[norm] = Math.max(res[norm], Number(val) || 0);
+                    }
+                  });
+                  return res;
+                };
+
+                const prevTok = normalizeTokenMap(prevPlayer.tokens);
+                const newTok = normalizeTokenMap(newPlayer.tokens);
+
+                const gainedTokens = [];
+                ['white', 'blue', 'green', 'red', 'black', 'gold'].forEach((col) => {
+                  const diff = (newTok[col] || 0) - (prevTok[col] || 0);
+                  if (diff > 0) {
+                    const count = Math.min(diff, 3);
+                    for (let i = 0; i < count; i++) {
+                      gainedTokens.push(col);
+                    }
                   }
                 });
-                return res;
-              };
 
-              const prevTok = normalizeTokenMap(prevPlayer.tokens);
-              const newTok = normalizeTokenMap(newPlayer.tokens);
-
-              const gainedTokens = [];
-              ['white', 'blue', 'green', 'red', 'black', 'gold'].forEach((col) => {
-                const diff = (newTok[col] || 0) - (prevTok[col] || 0);
-                if (diff > 0) {
-                  const count = Math.min(diff, 3);
-                  for (let i = 0; i < count; i++) {
-                    gainedTokens.push(col);
-                  }
+                if (gainedTokens.length > 0) {
+                  console.log(`[AnimationTrigger] Token gain detected for player ${buyerPlayerName} (index ${buyerPlayerIndex}):`, gainedTokens);
+                  useAnimationStore.getState().triggerTokenGain({
+                    playerId: buyerPlayerId,
+                    playerIndex: buyerPlayerIndex,
+                    playerName: buyerPlayerName,
+                    tokens: gainedTokens,
+                  });
                 }
-              });
-
-              if (gainedTokens.length > 0) {
-                useAnimationStore.getState().triggerTokenGain({
-                  playerId: buyerPlayerId,
-                  playerIndex: buyerPlayerIndex,
-                  playerName: buyerPlayerName,
-                  tokens: gainedTokens,
-                });
               }
+            } catch (playerErr) {
+              console.error(`[AnimationTrigger] Error detecting animations for player index ${pIdx}:`, playerErr);
             }
           }
         }

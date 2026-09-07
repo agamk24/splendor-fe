@@ -84,6 +84,7 @@ export default function PlayerPanel({ player, index }) {
   return (
     <div
       id={`player-panel-${player.id || player.playerId || player.name}`}
+      data-player-panel="true"
       data-player-id={player.id || player.playerId}
       data-player-name={player.name}
       data-player-index={index}

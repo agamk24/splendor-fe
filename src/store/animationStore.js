@@ -41,14 +41,24 @@ export const useAnimationStore = create((set, get) => ({
     // 2. Cari koordinat panel pemain tujuan (dukung ID, nama, atau index secara berlapis)
     let playerEl = null;
     if (buyerPlayerId) {
-      playerEl = document.getElementById(`player-panel-${buyerPlayerId}`) || document.querySelector(`[data-player-id="${buyerPlayerId}"]`);
+      playerEl = document.getElementById(`player-panel-${buyerPlayerId}`) || document.querySelector(`[data-player-panel="true"][data-player-id="${buyerPlayerId}"]`) || document.querySelector(`[data-player-id="${buyerPlayerId}"]`);
     }
     if (!playerEl && buyerPlayerName) {
-      playerEl = document.querySelector(`[data-player-name="${buyerPlayerName}"]`) || document.getElementById(`player-panel-${buyerPlayerName}`);
+      playerEl = document.getElementById(`player-panel-${buyerPlayerName}`) || document.querySelector(`[data-player-panel="true"][data-player-name="${buyerPlayerName}"]`) || document.querySelector(`[data-player-name="${buyerPlayerName}"]`);
     }
     if (!playerEl && typeof buyerPlayerIndex === 'number') {
-      playerEl = document.querySelector(`[data-player-index="${buyerPlayerIndex}"]`);
+      playerEl = document.querySelector(`[data-player-panel="true"][data-player-index="${buyerPlayerIndex}"]`) || document.querySelector(`[data-player-index="${buyerPlayerIndex}"]`);
     }
+
+    console.log('[AnimationStore] triggerCardPurchase:', {
+      cardId: card?.id,
+      actionType,
+      buyerPlayerId,
+      buyerPlayerName,
+      buyerPlayerIndex,
+      playerElFound: Boolean(playerEl),
+      cardElFound: Boolean(cardEl),
+    });
 
     const startRect = cardEl
       ? cardEl.getBoundingClientRect()
@@ -149,14 +159,22 @@ export const useAnimationStore = create((set, get) => ({
 
     let targetEl = null;
     if (playerId) {
-      targetEl = document.getElementById(`player-panel-${playerId}`) || document.querySelector(`[data-player-id="${playerId}"]`);
+      targetEl = document.getElementById(`player-panel-${playerId}`) || document.querySelector(`[data-player-panel="true"][data-player-id="${playerId}"]`) || document.querySelector(`[data-player-id="${playerId}"]`);
     }
     if (!targetEl && playerName) {
-      targetEl = document.querySelector(`[data-player-name="${playerName}"]`) || document.getElementById(`player-panel-${playerName}`);
+      targetEl = document.getElementById(`player-panel-${playerName}`) || document.querySelector(`[data-player-panel="true"][data-player-name="${playerName}"]`) || document.querySelector(`[data-player-name="${playerName}"]`);
     }
     if (!targetEl && typeof playerIndex === 'number') {
-      targetEl = document.querySelector(`[data-player-index="${playerIndex}"]`);
+      targetEl = document.querySelector(`[data-player-panel="true"][data-player-index="${playerIndex}"]`) || document.querySelector(`[data-player-index="${playerIndex}"]`);
     }
+
+    console.log('[AnimationStore] triggerTokenGain:', {
+      tokens,
+      playerId,
+      playerName,
+      playerIndex,
+      targetElFound: Boolean(targetEl),
+    });
 
     const fallbackY = 180 + (typeof playerIndex === 'number' ? playerIndex * 110 : 0);
     const fallbackTargetRect = targetEl
