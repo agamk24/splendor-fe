@@ -11,6 +11,7 @@ import EndGameScreen from '../components/EndGameScreen';
 import ToastAlert from '../components/ToastAlert';
 import CardFlyOverlay from '../components/CardFlyOverlay';
 import TokenFlyOverlay from '../components/TokenFlyOverlay';
+import GameActionLog from '../components/GameActionLog';
 import { ALL_GEMS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 import { sound } from '../utils/soundManager';
 import GemIcon from '../components/GemIcon';
@@ -282,13 +283,16 @@ export default function Room() {
 
           {/* Layout Permainan Utama: Card Player di sebelah kiri, Meja di sebelah kanan */}
           <div className="game-layout">
-            {/* Kolom Kiri: Card Player (Panel Pemain) */}
+            {/* Kolom Kiri: Card Player (Panel Pemain) & Riwayat Aksi */}
             <aside className="game-players-column">
               <div className="players-list">
                 {players.map((p, idx) => (
                   <PlayerPanel key={p.id || idx} player={p} index={idx} />
                 ))}
               </div>
+
+              {/* Log Aktivitas Permainan Sesuai Spesifikasi API.md */}
+              <GameActionLog />
             </aside>
 
             {/* Kolom Kanan: Papan Permainan (Bangsawan, Kartu Meja, & Bank Permata) */}

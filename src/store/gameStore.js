@@ -17,6 +17,7 @@ export const useGameStore = create((set, get) => ({
   players: [],
   gameState: null,
   lastError: null,
+  actionLog: [],
 
   // Setters manual bila diperlukan
   setRoomId: (roomId) => set({ roomId }),
@@ -36,6 +37,7 @@ export const useGameStore = create((set, get) => ({
       players: [],
       gameState: null,
       lastError: null,
+      actionLog: [],
     });
   },
 
@@ -204,7 +206,8 @@ export const useGameStore = create((set, get) => ({
     socket.on('game_started', (payload) => {
       console.log('[Socket] game_started:', payload);
       const gameState = payload?.gameState || payload;
-      set({ gameState, lastError: null });
+      const initialLog = Array.isArray(gameState?.log) ? gameState.log : [];
+      set({ gameState, actionLog: initialLog, lastError: null });
     });
 
     // 6. state_update { gameState }
@@ -212,8 +215,9 @@ export const useGameStore = create((set, get) => ({
       console.log('[Socket] state_update:', payload);
       const newGameState = payload?.gameState || payload;
       const prevGameState = get().gameState;
+      const synthesizedLogs = [];
 
-      // Deteksi aksi kartu & token secara reaktif untuk memicu animasi Framer Motion
+      // Deteksi aksi kartu & token secara reaktif untuk memicu animasi Framer Motion & log aksi
       try {
         if (prevGameState && newGameState && Array.isArray(prevGameState.players) && Array.isArray(newGameState.players)) {
           const getTierCards = (tier, tCards) => {
@@ -271,6 +275,16 @@ export const useGameStore = create((set, get) => ({
                     newCard,
                     actionType: 'buy',
                   });
+
+                  // Catat ke format LogEntry sesuai API.md
+                  synthesizedLogs.push({
+                    id: `log-buy-${Date.now()}-${boughtCard.id}-${Math.random().toString(36).slice(2, 6)}`,
+                    timestamp: Date.now(),
+                    type: 'buy_card',
+                    playerId: buyerPlayerId,
+                    card: boughtCard,
+                    fromReserved: slotIndex === -1,
+                  });
                 }
               }
 
@@ -304,6 +318,21 @@ export const useGameStore = create((set, get) => ({
                     slotIndex: slotIndex !== -1 ? slotIndex : undefined,
                     newCard,
                     actionType: 'reserve',
+                    fromDeck: slotIndex === -1,
+                  });
+
+                  const prevGold = prevPlayer.tokens?.gold ?? prevPlayer.tokens?.yellow ?? 0;
+                  const newGold = newPlayer.tokens?.gold ?? newPlayer.tokens?.yellow ?? 0;
+                  const tookGold = newGold > prevGold;
+
+                  // Catat ke format LogEntry sesuai API.md
+                  synthesizedLogs.push({
+                    id: `log-res-${Date.now()}-${reservedCard.id}-${Math.random().toString(36).slice(2, 6)}`,
+                    timestamp: Date.now(),
+                    type: 'reserve_card',
+                    playerId: buyerPlayerId,
+                    card: reservedCard,
+                    tookGold,
                     fromDeck: slotIndex === -1,
                   });
                 }
@@ -345,18 +374,94 @@ export const useGameStore = create((set, get) => ({
                     playerName: buyerPlayerName,
                     tokens: gainedTokens,
                   });
+
+                  // Catat ke format LogEntry sesuai API.md (hanya jika bukan sekadar emas dari reservasi)
+                  const isJustReserveGold = gainedTokens.length === 1 && gainedTokens[0] === 'gold' && newReserved.length > prevReserved.length;
+                  if (!isJustReserveGold) {
+                    if (gainedTokens.length === 2 && gainedTokens[0] === gainedTokens[1]) {
+                      synthesizedLogs.push({
+                        id: `log-two-${Date.now()}-${buyerPlayerId}-${Math.random().toString(36).slice(2, 6)}`,
+                        timestamp: Date.now(),
+                        type: 'take_two_same',
+                        playerId: buyerPlayerId,
+                        color: toServerColor(gainedTokens[0]),
+                        count: 2,
+                      });
+                    } else {
+                      synthesizedLogs.push({
+                        id: `log-three-${Date.now()}-${buyerPlayerId}-${Math.random().toString(36).slice(2, 6)}`,
+                        timestamp: Date.now(),
+                        type: 'take_three_different',
+                        playerId: buyerPlayerId,
+                        colors: gainedTokens.map(toServerColor),
+                      });
+                    }
+                  }
                 }
               }
             } catch (playerErr) {
               console.error(`[AnimationTrigger] Error detecting animations for player index ${pIdx}:`, playerErr);
             }
           }
+
+          // 4. KASUS BANGSAWAN BERKUNJUNG (Noble Visit)
+          if (Array.isArray(prevGameState.nobles) && Array.isArray(newGameState.nobles) && prevGameState.nobles.length > newGameState.nobles.length) {
+            const newNobleIds = new Set(newGameState.nobles.map((n) => n.id));
+            const visitedNoble = prevGameState.nobles.find((n) => !newNobleIds.has(n.id));
+            const visitedPlayer = prevGameState.players?.[prevGameState.currentPlayerIndex] || newGameState.players?.[prevGameState.currentPlayerIndex];
+            if (visitedNoble && visitedPlayer) {
+              synthesizedLogs.push({
+                id: `log-noble-${Date.now()}-${visitedNoble.id}-${Math.random().toString(36).slice(2, 6)}`,
+                timestamp: Date.now(),
+                type: 'noble_visit',
+                playerId: visitedPlayer.id || visitedPlayer.playerId,
+                noble: visitedNoble,
+              });
+            }
+          }
+
+          // 5. KASUS MEMBUANG TOKEN (Discard Tokens)
+          if (prevGameState.pendingDiscard && !newGameState.pendingDiscard) {
+            const discId = prevGameState.pendingDiscard.playerId;
+            const prevP = prevGameState.players?.find((p) => (p.id && p.id === discId) || (p.playerId && p.playerId === discId));
+            const newP = newGameState.players?.find((p) => (p.id && p.id === discId) || (p.playerId && p.playerId === discId));
+            if (prevP && newP) {
+              const discMap = {};
+              ['white', 'blue', 'green', 'red', 'black', 'gold'].forEach((col) => {
+                const pVal = prevP.tokens?.[col] ?? prevP.tokens?.[toServerColor(col)] ?? 0;
+                const nVal = newP.tokens?.[col] ?? newP.tokens?.[toServerColor(col)] ?? 0;
+                if (pVal > nVal) {
+                  discMap[toServerColor(col)] = pVal - nVal;
+                }
+              });
+              synthesizedLogs.push({
+                id: `log-disc-${Date.now()}-${discId}-${Math.random().toString(36).slice(2, 6)}`,
+                timestamp: Date.now(),
+                type: 'discard_tokens',
+                playerId: discId,
+                tokens: discMap,
+              });
+            }
+          }
+
+          // 6. KASUS PERMAINAN BERAKHIR (Game Over)
+          if (prevGameState.status === 'playing' && newGameState.status === 'finished') {
+            synthesizedLogs.push({
+              id: `log-over-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              timestamp: Date.now(),
+              type: 'game_over',
+              winnerId: newGameState.winnerId || null,
+            });
+          }
         }
       } catch (err) {
-        console.error('[AnimationTrigger] Error detecting animations:', err);
+        console.error('[AnimationTrigger] Error detecting animations & logs:', err);
       }
 
-      set({ gameState: newGameState });
+      // Prioritaskan log resmi dari server sesuai API.md bila backend menyediakannya
+      const finalActionLog = Array.isArray(newGameState.log) && newGameState.log.length > 0 ? newGameState.log : [...(get().actionLog || []), ...synthesizedLogs];
+
+      set({ gameState: newGameState, actionLog: finalActionLog });
     });
 
     // 7. action_error { error } — backend mengirim kode, bukan kalimat.
