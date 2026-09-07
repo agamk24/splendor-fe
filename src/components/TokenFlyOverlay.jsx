@@ -60,9 +60,9 @@ export default function TokenFlyOverlay() {
                 opacity: [1, 1, 0],
               }}
               transition={{
-                duration: 0.65,
-                delay: index * 0.08,
-                times: [0, 0.55, 1],
+                duration: 1.5,
+                delay: index * 0.22,
+                times: [0, 0.8, 1],
                 ease: 'easeInOut',
               }}
               onAnimationComplete={() => removeFlyingToken(id, playerId)}

@@ -65,16 +65,16 @@ export default function CardFlyOverlay() {
                 y: targetY,
                 scale: 0.38,
                 rotate: -12,
-                opacity: 0,
+                opacity: [1, 1, 1, 0.8, 0],
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
               }}
               exit={{ opacity: 0 }}
               transition={{
-                x: { type: 'spring', damping: 22, stiffness: 130 },
-                y: { type: 'spring', damping: 22, stiffness: 130 },
-                scale: { type: 'spring', damping: 22, stiffness: 130 },
-                rotate: { duration: 0.65, ease: 'easeOut' },
-                opacity: { duration: 0.65, ease: 'easeIn' },
+                x: { duration: 1.8, ease: [0.22, 1, 0.36, 1] },
+                y: { duration: 1.8, ease: [0.22, 1, 0.36, 1] },
+                scale: { duration: 1.8, ease: [0.22, 1, 0.36, 1] },
+                rotate: { duration: 1.8, ease: 'easeOut' },
+                opacity: { duration: 1.8, times: [0, 0.6, 0.85, 0.95, 1], ease: 'easeInOut' },
               }}
               onAnimationComplete={() => removeFlyingCard(id, buyerPlayerId)}
               style={{

@@ -126,7 +126,7 @@ export const useAnimationStore = create((set, get) => ({
     // Reset recentBuyerId setelah efek pulse selesai
     setTimeout(() => {
       set((state) => (state.recentBuyerId === buyerPlayerId ? { recentBuyerId: null } : {}));
-    }, 600);
+    }, 1400);
   },
 
   // Menyelesaikan animasi dealing card di slot tertentu
@@ -226,6 +226,6 @@ export const useAnimationStore = create((set, get) => ({
 
     setTimeout(() => {
       set((state) => (state.recentTokenBuyerId === playerId ? { recentTokenBuyerId: null } : {}));
-    }, 500);
+    }, 1200);
   },
 }));

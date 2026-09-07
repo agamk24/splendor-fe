@@ -62,9 +62,9 @@ export default function CardFlipSlot({ tier, slotIndex, children }) {
           }}
           transition={{
             type: 'spring',
-            stiffness: 160,
-            damping: 20,
-            duration: 0.45,
+            stiffness: 55,
+            damping: 15,
+            duration: 1.1,
           }}
           style={{
             width: '100%',
@@ -77,8 +77,8 @@ export default function CardFlipSlot({ tier, slotIndex, children }) {
             initial={{ rotateY: 0 }}
             animate={{ rotateY: 180 }}
             transition={{
-              delay: 0.22,
-              duration: 0.48,
+              delay: 0.65,
+              duration: 1.25,
               ease: [0.25, 1, 0.5, 1],
             }}
             onAnimationComplete={() => finishDealingCard(slotKey)}
