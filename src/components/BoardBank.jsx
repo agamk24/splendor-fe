@@ -32,10 +32,9 @@ export default function BoardBank() {
   const selectedColorsCount = selectedEntries.length;
   const hasDouble = selectedEntries.some(([_, count]) => count === 2);
 
-  // Validasi aturan pengambilan token Splendor, mengikuti engine backend:
+  // Validasi aturan pengambilan token:
   // 1. Ambil 2 token warna sama — hanya jika stok bank >= 4 (TAKE_TWO_MIN_IN_BANK).
-  // 2. Ambil 1 token dari TEPAT 3 warna berbeda (TAKE_THREE_COUNT).
-  //    Backend menolak 1 atau 2 warna dengan NEED_THREE_DISTINCT_COLORS.
+  // 2. Ambil 1–3 token dari warna berbeda (bisa 1, 2, atau 3 token jika stok terbatas).
   const isValidSelection = (() => {
     if (totalSelected === 0) return false;
     if (hasDouble) {
@@ -45,7 +44,7 @@ export default function BoardBank() {
       }
       return false;
     }
-    return selectedColorsCount === 3 && totalSelected === 3;
+    return selectedColorsCount >= 1 && selectedColorsCount <= 3 && totalSelected === selectedColorsCount;
   })();
 
   // Klik token di bank untuk memilih
@@ -187,7 +186,7 @@ export default function BoardBank() {
         </div>
 
         {totalSelected === 0 ? (
-          <p style={{ color: '#64748b', fontSize: '0.8rem', textAlign: 'center', margin: '0.25rem 0' }}>Klik token bank di atas untuk memilih (tepat 3 warna beda / 2 warna sama).</p>
+          <p style={{ color: '#64748b', fontSize: '0.8rem', textAlign: 'center', margin: '0.25rem 0' }}>Klik token bank di atas untuk memilih (1–3 warna berbeda atau 2 warna sama).</p>
         ) : (
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
             {selectedEntries.map(([color, count]) => {

@@ -10,6 +10,7 @@ export default function PlayerPanel({ player, index }) {
   const gameState = useGameStore((state) => state.gameState);
   const checkIsMe = useGameStore((state) => state.isMe);
   const myTurn = useGameStore((state) => state.isMyTurn());
+  const buyCard = useGameStore((state) => state.buyCard);
   const isRecentBuyer = useAnimationStore((state) => {
     const rId = state.recentBuyerId;
     if (rId === null || rId === undefined) return false;

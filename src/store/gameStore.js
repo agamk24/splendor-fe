@@ -104,7 +104,7 @@ export const useGameStore = create((set, get) => ({
   // Semua warna diterjemahkan ke nama resmi backend di sini, supaya komponen UI
   // tetap boleh memakai white/blue/green/red/black.
 
-  /** Ambil 1 token dari 3 warna berbeda. Backend menolak selain tepat 3 warna. */
+  /** Ambil 1–3 token dari warna berbeda (bisa 1, 2, atau 3 warna). */
   takeThreeDifferent: (uiColors) => {
     const colors = (uiColors || []).map(toServerColor);
     get().sendPlayerAction({ type: 'take_three_different', colors });
