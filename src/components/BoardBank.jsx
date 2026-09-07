@@ -124,6 +124,7 @@ export default function BoardBank() {
           return (
             <button
               key={color}
+              id={`bank-token-${color}`}
               type="button"
               className={`gem-token ${isSelected ? 'gem-token-selected' : ''}`}
               style={{
@@ -148,6 +149,7 @@ export default function BoardBank() {
           const goldCount = bank.gold ?? 0;
           return (
             <div
+              id="bank-token-gold"
               className="gem-token"
               style={{
                 background: `radial-gradient(circle at 35% 35%, ${meta.bgColor}, ${meta.borderColor})`,

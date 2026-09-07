@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
+import { useAnimationStore } from '../store/animationStore';
 import { GEM_COLORS, ALL_GEMS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 import GemIcon from './GemIcon';
 import CardIllustration from './CardIllustration';
@@ -9,7 +10,16 @@ export default function PlayerPanel({ player, index }) {
   const gameState = useGameStore((state) => state.gameState);
   const checkIsMe = useGameStore((state) => state.isMe);
   const myTurn = useGameStore((state) => state.isMyTurn());
-  const buyCard = useGameStore((state) => state.buyCard);
+  const isRecentBuyer = useAnimationStore((state) => {
+    const rId = state.recentBuyerId;
+    if (rId === null || rId === undefined) return false;
+    return rId === player?.id || rId === player?.playerId || rId === player?.name || (typeof index === 'number' && (rId === index || rId === `index-${index}`));
+  });
+  const isRecentTokenBuyer = useAnimationStore((state) => {
+    const rId = state.recentTokenBuyerId;
+    if (rId === null || rId === undefined) return false;
+    return rId === player?.id || rId === player?.playerId || rId === player?.name || (typeof index === 'number' && (rId === index || rId === `index-${index}`));
+  });
 
   // State modal untuk melihat/membeli kartu reservasi pemilik sendiri
   const [selectedReservedCard, setSelectedReservedCard] = useState(null);
@@ -72,11 +82,24 @@ export default function PlayerPanel({ player, index }) {
 
   return (
     <div
+      id={`player-panel-${player.id || player.playerId || player.name}`}
+      data-player-id={player.id || player.playerId}
+      data-player-name={player.name}
+      data-player-index={index}
       className={`card ${isCurrentTurn ? 'player-active' : ''}`}
       style={{
         padding: '0.6rem 0.75rem',
-        border: isCurrentTurn ? '2px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.1)',
-        background: isMe ? 'rgba(30, 41, 59, 0.9)' : 'rgba(15, 23, 42, 0.75)',
+        border: isRecentBuyer || isRecentTokenBuyer ? '2px solid #34d399' : isCurrentTurn ? '2px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.1)',
+        background: isRecentBuyer
+          ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(30, 41, 59, 0.95))'
+          : isRecentTokenBuyer
+            ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(30, 41, 59, 0.95))'
+            : isMe
+              ? 'rgba(30, 41, 59, 0.9)'
+              : 'rgba(15, 23, 42, 0.75)',
+        boxShadow: isRecentBuyer ? '0 0 20px rgba(52, 211, 153, 0.7), 0 0 10px rgba(251, 191, 36, 0.4)' : isRecentTokenBuyer ? '0 0 20px rgba(251, 191, 36, 0.7), 0 0 10px rgba(52, 211, 153, 0.4)' : undefined,
+        transform: isRecentBuyer || isRecentTokenBuyer ? 'scale(1.03)' : 'scale(1)',
+        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
         position: 'relative',
         borderRadius: '8px',
         display: 'flex',
@@ -261,6 +284,11 @@ export default function PlayerPanel({ player, index }) {
             return (
               <div
                 key={color}
+                id={`player-token-${player.id || player.playerId || player.name}-${color}`}
+                data-player-token={color}
+                data-player-index={index}
+                data-player-name={player.name}
+                data-token-key={`token-${index}-${color}`}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',

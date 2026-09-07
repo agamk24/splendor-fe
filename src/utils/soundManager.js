@@ -114,6 +114,19 @@ class SoundManager {
     });
   }
 
+  // 8. Suara kartu baru ditarik dari deck dan membalik (Card dealing & 3D flip)
+  playCardDeal() {
+    if (this.muted) return;
+    this.playTone(320, 'triangle', 0.08, 0.08, true);
+    setTimeout(() => this.playTone(520, 'sine', 0.12, 0.1, false), 60);
+  }
+
+  // 9. Suara desiran kartu terbang (Card swoosh glide)
+  playCardSwoosh() {
+    if (this.muted) return;
+    this.playTone(280, 'sine', 0.18, 0.08, true);
+  }
+
   // Opsi memutar file audio kustom (mp3/wav) jika user menaruh file di /public/sounds/
   playCustomSound(filename) {
     if (this.muted || typeof window === 'undefined') return;

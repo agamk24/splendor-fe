@@ -5,6 +5,7 @@ import { GEM_COLORS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 import { sound } from '../utils/soundManager';
 import GemIcon from './GemIcon';
 import CardIllustration from './CardIllustration';
+import CardFlipSlot from './CardFlipSlot';
 
 export default function CardTable() {
   const gameState = useGameStore((state) => state.gameState);
@@ -135,6 +136,7 @@ export default function CardTable() {
             >
               {/* Tumpukan Deck per Tier */}
               <div
+                id={`deck-tier-${tier}`}
                 onClick={() => deckCount > 0 && isMyTurn && canReserve && setSelectedDeckTier(tier)}
                 style={{
                   width: '95px',
@@ -178,79 +180,81 @@ export default function CardTable() {
                   const points = card.points ?? card.prestige ?? 0;
 
                   return (
-                    <div
-                      key={card.id || `${tier}-${idx}`}
-                      className={`splendor-card ${affordable ? 'affordable' : ''}`}
-                      onClick={() => setSelectedCard({ ...card, tier })}
-                      style={{
-                        height: '145px',
-                        width: '105px',
-                        borderTop: `4px solid ${bonusMeta.borderColor}`,
-                        position: 'relative',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {/* Ilustrasi Artwork Kartu */}
-                      <CardIllustration card={card} />
-
-                      {/* Header Kartu: Poin & Bonus Permata */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 2 }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc', textShadow: '0 2px 4px rgba(0,0,0,0.9)' }}>{points > 0 ? points : ''}</span>
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            filter: `drop-shadow(0 0 5px ${bonusMeta.glowColor})`,
-                          }}
-                          title={`Bonus: ${bonusMeta.indonesian}`}
-                        >
-                          <GemIcon color={bonusColor} size={22} />
-                        </span>
-                      </div>
-
-                      {/* Biaya Kartu (Cost) Menurun di Kiri Bawah Sesuai Desain Asli Splendor */}
+                    <CardFlipSlot key={`slot-${tier}-${idx}`} tier={tier} slotIndex={idx}>
                       <div
+                        id={`table-card-${card.id}`}
+                        className={`splendor-card ${affordable ? 'affordable' : ''}`}
+                        onClick={() => setSelectedCard({ ...card, tier })}
                         style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '3px',
-                          marginTop: 'auto',
-                          alignItems: 'flex-start',
+                          height: '145px',
+                          width: '105px',
+                          borderTop: `4px solid ${bonusMeta.borderColor}`,
                           position: 'relative',
-                          zIndex: 2,
+                          overflow: 'hidden',
                         }}
                       >
-                        {card.cost &&
-                          Object.entries(card.cost).map(([cKey, costAmount]) => {
-                            if (costAmount <= 0) return null;
-                            const c = normalizeColor(cKey);
-                            const meta = GEM_METADATA[c];
-                            return (
-                              <div
-                                key={cKey}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '3px',
-                                  padding: '1px 5px 1px 3px',
-                                  borderRadius: '6px',
-                                  background: meta?.solidBg || '#1e293b',
-                                  border: `1.5px solid ${meta?.solidBorder || meta?.borderColor || '#64748b'}`,
-                                  color: meta?.solidText || '#ffffff',
-                                  fontSize: '0.78rem',
-                                  fontWeight: 800,
-                                  lineHeight: 1,
-                                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.65)',
-                                }}
-                                title={`Biaya: ${costAmount} permata ${meta?.indonesian || cKey}`}
-                              >
-                                <GemIcon color={c} size={13} />
-                                <span>{costAmount}</span>
-                              </div>
-                            );
-                          })}
+                        {/* Ilustrasi Artwork Kartu */}
+                        <CardIllustration card={card} />
+
+                        {/* Header Kartu: Poin & Bonus Permata */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 2 }}>
+                          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc', textShadow: '0 2px 4px rgba(0,0,0,0.9)' }}>{points > 0 ? points : ''}</span>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              filter: `drop-shadow(0 0 5px ${bonusMeta.glowColor})`,
+                            }}
+                            title={`Bonus: ${bonusMeta.indonesian}`}
+                          >
+                            <GemIcon color={bonusColor} size={22} />
+                          </span>
+                        </div>
+
+                        {/* Biaya Kartu (Cost) Menurun di Kiri Bawah Sesuai Desain Asli Splendor */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '3px',
+                            marginTop: 'auto',
+                            alignItems: 'flex-start',
+                            position: 'relative',
+                            zIndex: 2,
+                          }}
+                        >
+                          {card.cost &&
+                            Object.entries(card.cost).map(([cKey, costAmount]) => {
+                              if (costAmount <= 0) return null;
+                              const c = normalizeColor(cKey);
+                              const meta = GEM_METADATA[c];
+                              return (
+                                <div
+                                  key={cKey}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    padding: '1px 5px',
+                                    borderRadius: '10px',
+                                    background: meta?.bgColor || '#334155',
+                                    border: `1px solid ${meta?.borderColor || '#64748b'}`,
+                                    color: meta?.textColor || '#fff',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 800,
+                                    lineHeight: 1,
+                                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.65)',
+                                  }}
+                                  title={`Biaya: ${costAmount} permata ${meta?.indonesian || cKey}`}
+                                >
+                                  <GemIcon color={c} size={13} />
+                                  <span>{costAmount}</span>
+                                </div>
+                              );
+                            })}
+                        </div>
                       </div>
-                    </div>
+                    </CardFlipSlot>
                   );
                 })}
 

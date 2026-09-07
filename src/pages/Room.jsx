@@ -9,6 +9,8 @@ import NobleRow from '../components/NobleRow';
 import PlayerPanel from '../components/PlayerPanel';
 import EndGameScreen from '../components/EndGameScreen';
 import ToastAlert from '../components/ToastAlert';
+import CardFlyOverlay from '../components/CardFlyOverlay';
+import TokenFlyOverlay from '../components/TokenFlyOverlay';
 import { ALL_GEMS, GEM_METADATA, normalizeColor } from '../utils/gemUtils';
 import { sound } from '../utils/soundManager';
 import GemIcon from '../components/GemIcon';
@@ -149,6 +151,10 @@ export default function Room() {
     <div className="container room-container" style={{ paddingTop: '1rem', paddingBottom: '2.5rem' }}>
       {/* Toast Alert Auto-Hide untuk Error Action */}
       <ToastAlert />
+
+      {/* Overlay Animasi Kartu & Token Terbang (Framer Motion Portal) */}
+      <CardFlyOverlay />
+      <TokenFlyOverlay />
 
       {/* Top Bar Room Info */}
       <div
